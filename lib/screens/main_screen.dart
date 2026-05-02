@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'app_colors.dart';
+
+import '../constants/app_colors.dart';
 import 'home_page.dart';
 import 'shop_page.dart';
-import 'updates_page.dart';
+import 'favorite_page.dart'; // Import file mới thay vì updates_page
 import 'cart_page.dart';
 
 class MainScreen extends StatefulWidget {
@@ -18,7 +19,7 @@ class _MainScreenState extends State<MainScreen>{
   final List<Widget> _pages = [
     const EtsyHomePage(),
     const EtsyShopPage(),
-    const EtsyUpdatesPage(),
+    const FavoritePage(), // Đã thay trang Yêu thích thật vào đây
     const EtsyCartPage(),
   ];
 
@@ -39,19 +40,19 @@ class _MainScreenState extends State<MainScreen>{
         items: [
           BottomNavigationBarItem(
             icon: Icon(_currentIndex == 0 ? Icons.home : Icons.home_outlined),
-            label: 'Home',
+            label: 'Trang chủ',
           ),
           const BottomNavigationBarItem(
             icon: Icon(Icons.search, size: 26),
-            label: 'Shop',
+            label: 'Cửa hàng',
           ),
           BottomNavigationBarItem(
             icon: Icon(_currentIndex == 2 ? Icons.favorite : Icons.favorite_border),
-            label: 'Favorites',
+            label: 'Yêu thích',
           ),
           const BottomNavigationBarItem(
             icon: Icon(Icons.shopping_cart_outlined),
-            label: 'Cart',
+            label: 'Giỏ hàng',
           ),
         ],
       ),

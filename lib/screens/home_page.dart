@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'app_models.dart';
-import 'shared_widgets.dart';
+import '../models/app_models.dart';
+import '../widgets/shared_widgets.dart';
+import '../constants/app_colors.dart'; // Thêm import màu
 
 class EtsyHomePage extends StatelessWidget {
   const EtsyHomePage({super.key});
@@ -51,9 +52,10 @@ class EtsyHomePage extends StatelessWidget {
                               Expanded(
                                 flex: 1,
                                 child: Image.network(
-                                  'https://i.etsystatic.com/26451670/r/il/64ce5f/3796677708/il_794xN.3796677708_k3eb.jpg',
+                                  'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=500&q=60',
                                   fit: BoxFit.cover,
                                   height: double.infinity,
+                                  errorBuilder: (context, error, stackTrace) => Container(color: Colors.grey[200], child: const Icon(Icons.image_not_supported, color: Colors.grey)),
                                 ),
                               )
                             ],
@@ -71,11 +73,14 @@ class EtsyHomePage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 25),
+
+                  // Đổi màu chữ này thành etsyText (Đen)
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 15),
-                    child: Text("Inspiration at your fingertips", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                    child: Text("Inspiration at your fingertips", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: etsyText)),
                   ),
                   const SizedBox(height: 15),
+
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 15),
                     child: GridView.builder(

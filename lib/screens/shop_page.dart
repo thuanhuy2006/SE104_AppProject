@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'app_colors.dart';
-import 'shared_widgets.dart';
+import '../constants/app_colors.dart';
+import '../widgets/shared_widgets.dart';
 
 class EtsyShopPage extends StatelessWidget {
   const EtsyShopPage({super.key});
