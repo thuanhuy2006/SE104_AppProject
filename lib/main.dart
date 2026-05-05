@@ -1,18 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+<<<<<<< HEAD
 import 'package:intl/intl.dart';
 
+=======
+
+import 'constants/app_colors.dart';
+import 'providers/app_providers.dart';
+import 'screens/main_screen.dart';
+
+>>>>>>> 179b32584cbd9f0b8d46bf194841a8fb66afc5ff
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const EtsyCloneApp());
 }
 
+<<<<<<< HEAD
 // Màu sắc chủ đạo
 const Color etsyBackground = Color(0xFF221F27);
 const Color etsyCardColor = Color(0xFF33303A);
 const Color etsyText = Colors.white;
 const Color etsyGreen = Color(0xFF81C784);
 
+=======
+>>>>>>> 179b32584cbd9f0b8d46bf194841a8fb66afc5ff
 class EtsyCloneApp extends StatelessWidget {
   const EtsyCloneApp({super.key});
 
@@ -23,17 +34,29 @@ class EtsyCloneApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CartProvider()),
         ChangeNotifierProvider(create: (_) => FavoriteProvider()),
         ChangeNotifierProvider(create: (_) => SearchProvider()),
+<<<<<<< HEAD
         ChangeNotifierProvider(create: (_) => AddressProvider()),
+=======
+>>>>>>> 179b32584cbd9f0b8d46bf194841a8fb66afc5ff
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Etsy Clone UI',
         theme: ThemeData(
+<<<<<<< HEAD
           brightness: Brightness.dark,
           scaffoldBackgroundColor: etsyBackground,
           primaryColor: Colors.white,
           colorScheme: const ColorScheme.dark(
             primary: Colors.white,
+=======
+          // Chuyển sang chế độ Sáng
+          brightness: Brightness.light,
+          scaffoldBackgroundColor: etsyBackground,
+          primaryColor: etsyText,
+          colorScheme: const ColorScheme.light(
+            primary: etsyText,
+>>>>>>> 179b32584cbd9f0b8d46bf194841a8fb66afc5ff
             surface: etsyBackground,
           ),
           fontFamily: 'Roboto',
@@ -43,6 +66,7 @@ class EtsyCloneApp extends StatelessWidget {
       ),
     );
   }
+<<<<<<< HEAD
 }
 
 // ============================================================================
@@ -1888,4 +1912,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ),
     );
   }
+=======
+>>>>>>> 179b32584cbd9f0b8d46bf194841a8fb66afc5ff
 }
