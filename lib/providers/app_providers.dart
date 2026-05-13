@@ -1,28 +1,105 @@
 import 'package:flutter/material.dart';
 import '../models/app_models.dart';
 
+enum UserRole { buyer, seller }
+
+class User {
+  String name;
+  final String email;
+  final String password;
+  String deliveryAddress;
+
+  User({
+    required this.name,
+    required this.email,
+    required this.password,
+    this.deliveryAddress = 'Việt Nam',
+  });
+}
+
+class UserProvider with ChangeNotifier {
+  User? _currentUser;
+  UserRole _role = UserRole.buyer;
+  bool _isLoggedIn = false;
+
+  User? get currentUser => _currentUser;
+  UserRole get role => _role;
+  bool get isLoggedIn => _isLoggedIn;
+  bool get isSeller => _role == UserRole.seller;
+
+  final List<User> _registeredUsers = [
+    User(name: 'Trần Đình Sang', email: 'sang@gmail.com', password: '123', deliveryAddress: 'Việt Nam'),
+  ];
+
+  void toggleRole() {
+    _role = _role == UserRole.buyer ? UserRole.seller : UserRole.buyer;
+    notifyListeners();
+  }
+
+  void updateUserInfo(String newName, String newAddress) {
+    if (_currentUser != null) {
+      _currentUser!.name = newName;
+      _currentUser!.deliveryAddress = newAddress;
+      notifyListeners();
+    }
+  }
+
+  bool login(String email, String password) {
+    try {
+      final user = _registeredUsers.firstWhere(
+        (u) => u.email == email && u.password == password,
+      );
+      _currentUser = user;
+      _isLoggedIn = true;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  void register(String name, String email, String password) {
+    final newUser = User(name: name, email: email, password: password, deliveryAddress: 'Việt Nam');
+    _registeredUsers.add(newUser);
+    _currentUser = newUser;
+    _isLoggedIn = true;
+    notifyListeners();
+  }
+
+  void logout() {
+    _currentUser = null;
+    _isLoggedIn = false;
+    _role = UserRole.buyer;
+    notifyListeners();
+  }
+}
+
+class ProductProvider with ChangeNotifier {
+  final List<Product> _products = [...ProductData.products];
+  List<Product> get products => _products;
+
+  void addProduct(Product product) {
+    _products.insert(0, product);
+    notifyListeners();
+  }
+}
+
 class CartProvider with ChangeNotifier {
   final Map<String, CartItem> _items = {};
-
   Map<String, CartItem> get items => _items;
 
-  // Đếm tổng số lượng (không phải số loại mặt hàng)
   int get itemCount {
     int count = 0;
     _items.forEach((key, item) => count += item.quantity);
     return count;
   }
 
-  // Tính tổng tiền
   double get totalAmount {
     double total = 0.0;
-    _items.forEach((key, cartItem) {
-      total += cartItem.price * cartItem.quantity;
-    });
+    _items.forEach((key, cartItem) => total += cartItem.price * cartItem.quantity);
     return total;
   }
 
-  // Thêm vào giỏ
   void addItem(String id, String title, int price, String imageUrl) {
     if (_items.containsKey(id)) {
       _items.update(id, (ex) => CartItem(id: ex.id, title: ex.title, price: ex.price, imageUrl: ex.imageUrl, quantity: ex.quantity + 1));
@@ -32,29 +109,32 @@ class CartProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Giảm số lượng 1 đơn vị
   void removeSingleItem(String productId) {
     if (!_items.containsKey(productId)) return;
     if (_items[productId]!.quantity > 1) {
-      _items.update(
-        productId,
-            (ex) => CartItem(id: ex.id, title: ex.title, price: ex.price, imageUrl: ex.imageUrl, quantity: ex.quantity - 1),
-      );
+      _items.update(productId, (ex) => CartItem(id: ex.id, title: ex.title, price: ex.price, imageUrl: ex.imageUrl, quantity: ex.quantity - 1));
     } else {
       _items.remove(productId);
     }
     notifyListeners();
   }
 
-  // Xóa hẳn một món hàng (dù số lượng là bao nhiêu)
   void removeItem(String productId) {
     _items.remove(productId);
     notifyListeners();
   }
 
-  // Xóa toàn bộ giỏ (Dùng sau khi thanh toán xong)
   void clearCart() {
     _items.clear();
+    notifyListeners();
+  }
+}
+
+class AddressProvider with ChangeNotifier {
+  SavedAddress? _defaultAddress;
+  SavedAddress? get defaultAddress => _defaultAddress;
+  void saveAddress(SavedAddress address) {
+    _defaultAddress = address;
     notifyListeners();
   }
 }
@@ -72,7 +152,7 @@ class FavoriteProvider with ChangeNotifier {
 class SearchProvider with ChangeNotifier {
   final TextEditingController searchController = TextEditingController();
   String get query => searchController.text.toLowerCase().trim();
-  SearchProvider() { searchController.addListener(() { notifyListeners(); }); }
+  SearchProvider() { searchController.addListener(() => notifyListeners()); }
   void clearSearch() {
     searchController.clear();
     FocusManager.instance.primaryFocus?.unfocus();

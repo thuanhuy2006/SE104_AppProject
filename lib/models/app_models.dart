@@ -34,6 +34,18 @@ class CartItem {
   });
 }
 
+class SavedAddress {
+  final String fullName;
+  final String address;
+  final String phoneNumber;
+
+  SavedAddress({
+    required this.fullName,
+    required this.address,
+    required this.phoneNumber,
+  });
+}
+
 class ProductData {
   static final List<Product> products = [
     // Trang sức

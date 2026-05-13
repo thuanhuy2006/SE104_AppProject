@@ -32,8 +32,8 @@ class ProductDetailPage extends StatelessWidget {
                 fit: BoxFit.cover,
                 errorBuilder: (ctx, err, stack) => Container(
                   height: MediaQuery.of(context).size.height * 0.55,
-                  color: Colors.grey.shade200,
-                  child: Icon(Icons.image_not_supported, color: Colors.grey.shade400, size: 50),
+                  color: Colors.grey.shade800,
+                  child: const Icon(Icons.image_not_supported, color: Colors.grey, size: 50),
                 ),
               ),
               Positioned(
@@ -44,7 +44,7 @@ class ProductDetailPage extends StatelessWidget {
                   children: [
                     ClipOval(
                       child: Material(
-                        color: Colors.black.withOpacity(0.5),
+                        color: Colors.black.withValues(alpha: 0.5),
                         child: InkWell(
                           onTap: () => Navigator.pop(context),
                           child: const Padding(
@@ -58,7 +58,7 @@ class ProductDetailPage extends StatelessWidget {
                       children: [
                         ClipOval(
                           child: Material(
-                            color: Colors.black.withOpacity(0.5),
+                            color: Colors.black.withValues(alpha: 0.5),
                             child: InkWell(
                               onTap: () => favProvider.toggleFavorite(product.id),
                               child: Padding(
@@ -71,7 +71,7 @@ class ProductDetailPage extends StatelessWidget {
                         const SizedBox(width: 10),
                         ClipOval(
                           child: Material(
-                            color: Colors.black.withOpacity(0.5),
+                            color: Colors.black.withValues(alpha: 0.5),
                             child: InkWell(
                               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const EtsyCartPage())),
                               child: Padding(
@@ -116,7 +116,6 @@ class ProductDetailPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // XỬ LÝ LOGIC MÀU SẮC GIÁ Ở TRANG CHI TIẾT
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
@@ -137,7 +136,7 @@ class ProductDetailPage extends StatelessWidget {
                   const SizedBox(height: 20),
                   const Text("Chi tiết sản phẩm", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: etsyText)),
                   const SizedBox(height: 10),
-                  Text(product.description, style: TextStyle(color: Colors.grey.shade800, fontSize: 15, height: 1.5)),
+                  Text(product.description, style: const TextStyle(color: Colors.white70, fontSize: 15, height: 1.5)),
                   const SizedBox(height: 30),
                 ],
               ),
@@ -146,7 +145,7 @@ class ProductDetailPage extends StatelessWidget {
 
           Container(
             padding: const EdgeInsets.all(15).copyWith(bottom: MediaQuery.of(context).padding.bottom + 15),
-            decoration: BoxDecoration(color: etsyCardColor, border: Border(top: BorderSide(color: Colors.grey.shade300, width: 0.5))),
+            decoration: BoxDecoration(color: etsyCardColor, border: Border(top: BorderSide(color: Colors.grey.shade800, width: 0.5))),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -157,7 +156,7 @@ class ProductDetailPage extends StatelessWidget {
                       Provider.of<CartProvider>(context, listen: false).addItem(product.id, product.title, product.price, product.imageUrl);
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Đã thêm vào giỏ hàng!"), duration: Duration(milliseconds: 1500)));
                     },
-                    style: ElevatedButton.styleFrom(backgroundColor: etsyText, foregroundColor: Colors.white, shape: const StadiumBorder()),
+                    style: ElevatedButton.styleFrom(backgroundColor: etsyText, foregroundColor: Colors.black, shape: const StadiumBorder()),
                     child: const Text("Thêm vào giỏ hàng", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   ),
                 ),
