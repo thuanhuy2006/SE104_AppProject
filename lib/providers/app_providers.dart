@@ -7,12 +7,14 @@ class User {
   String name;
   final String email;
   final String password;
+  String phoneNumber;
   String deliveryAddress;
 
   User({
     required this.name,
     required this.email,
     required this.password,
+    this.phoneNumber = '0901234567',
     this.deliveryAddress = 'Việt Nam',
   });
 }
@@ -21,14 +23,22 @@ class UserProvider with ChangeNotifier {
   User? _currentUser;
   UserRole _role = UserRole.buyer;
   bool _isLoggedIn = false;
+  final List<Map<String, dynamic>> _myOrders = [];
 
   User? get currentUser => _currentUser;
   UserRole get role => _role;
   bool get isLoggedIn => _isLoggedIn;
   bool get isSeller => _role == UserRole.seller;
+  List<Map<String, dynamic>> get myOrders => _myOrders;
 
   final List<User> _registeredUsers = [
-    User(name: 'Trần Đình Sang', email: 'sang@gmail.com', password: '123', deliveryAddress: 'Việt Nam'),
+    User(
+      name: 'Trần Đình Sang', 
+      email: 'sang@gmail.com', 
+      password: '123', 
+      phoneNumber: '0987654321', 
+      deliveryAddress: 'Việt Nam'
+    ),
   ];
 
   void toggleRole() {
@@ -36,12 +46,25 @@ class UserProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void updateUserInfo(String newName, String newAddress) {
+  // Cập nhật đầy đủ 3 thông tin: Tên, SĐT, Địa chỉ
+  void updateUserInfo(String newName, String newPhone, String newAddress) {
     if (_currentUser != null) {
       _currentUser!.name = newName;
+      _currentUser!.phoneNumber = newPhone;
       _currentUser!.deliveryAddress = newAddress;
       notifyListeners();
     }
+  }
+
+  void addOrder(List<CartItem> items, double total) {
+    _myOrders.insert(0, {
+      'id': 'ORD${DateTime.now().millisecondsSinceEpoch}',
+      'date': DateTime.now(),
+      'items': [...items],
+      'total': total,
+      'status': 'Đang chuẩn bị hàng'
+    });
+    notifyListeners();
   }
 
   bool login(String email, String password) {
@@ -59,7 +82,12 @@ class UserProvider with ChangeNotifier {
   }
 
   void register(String name, String email, String password) {
-    final newUser = User(name: name, email: email, password: password, deliveryAddress: 'Việt Nam');
+    final newUser = User(
+      name: name, 
+      email: email, 
+      password: password, 
+      deliveryAddress: 'Việt Nam'
+    );
     _registeredUsers.add(newUser);
     _currentUser = newUser;
     _isLoggedIn = true;
@@ -70,6 +98,7 @@ class UserProvider with ChangeNotifier {
     _currentUser = null;
     _isLoggedIn = false;
     _role = UserRole.buyer;
+    _myOrders.clear();
     notifyListeners();
   }
 }
@@ -78,8 +107,15 @@ class ProductProvider with ChangeNotifier {
   final List<Product> _products = [...ProductData.products];
   List<Product> get products => _products;
 
+  List<Product> get myProducts => _products.where((p) => p.id.startsWith('seller_')).toList();
+
   void addProduct(Product product) {
     _products.insert(0, product);
+    notifyListeners();
+  }
+
+  void deleteProduct(String id) {
+    _products.removeWhere((p) => p.id == id);
     notifyListeners();
   }
 }
@@ -88,11 +124,7 @@ class CartProvider with ChangeNotifier {
   final Map<String, CartItem> _items = {};
   Map<String, CartItem> get items => _items;
 
-  int get itemCount {
-    int count = 0;
-    _items.forEach((key, item) => count += item.quantity);
-    return count;
-  }
+  int get itemCount => _items.values.fold(0, (sum, item) => sum + item.quantity);
 
   double get totalAmount {
     double total = 0.0;

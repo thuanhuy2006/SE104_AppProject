@@ -4,6 +4,7 @@ import '../providers/app_providers.dart';
 import '../constants/app_colors.dart';
 import 'profile_screen.dart';
 import 'login_page.dart';
+import 'purchases_screen.dart';
 
 class YouScreen extends StatelessWidget {
   const YouScreen({super.key});
@@ -53,8 +54,7 @@ class YouScreen extends StatelessWidget {
             _buildDivider(),
             
             _buildMenuItem("Đơn mua", context, () {
-              // Navigator.push(context, MaterialPageRoute(builder: (_) => const PurchasesScreen()));
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Tính năng Đơn mua đang phát triển")));
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const PurchasesScreen()));
             }),
             _buildDivider(),
             

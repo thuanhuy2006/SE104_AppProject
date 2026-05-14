@@ -9,7 +9,8 @@ import '../screens/product_detail_page.dart';
 import '../screens/cart_page.dart';
 import '../screens/login_page.dart';
 import '../screens/settings_page.dart';
-import '../screens/you_screen.dart';
+import '../screens/profile_screen.dart';
+import '../screens/purchases_screen.dart';
 
 class EtsyHeader extends StatelessWidget {
   const EtsyHeader({super.key});
@@ -24,44 +25,77 @@ class EtsyHeader extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              ListTile(
-                leading: const Icon(Icons.person, color: Colors.white),
-                title: Text(userProvider.currentUser?.name ?? 'Người dùng', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                subtitle: Text(userProvider.currentUser?.email ?? '', style: const TextStyle(color: Colors.grey)),
-                onTap: () {
-                   Navigator.pop(ctx);
-                   Navigator.push(context, MaterialPageRoute(builder: (_) => const YouScreen()));
-                },
+              // Header menu: Avatar + Name + Email
+              Container(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 25,
+                      backgroundColor: userProvider.isSeller ? Colors.deepOrange : Colors.grey.shade700,
+                      child: Text(userProvider.currentUser?.name[0].toUpperCase() ?? "U", 
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20)),
+                    ),
+                    const SizedBox(width: 15),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(userProvider.currentUser?.name ?? 'Người dùng', 
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+                          Text(userProvider.currentUser?.email ?? '', 
+                            style: const TextStyle(color: Colors.grey, fontSize: 14)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const Divider(color: Colors.grey, height: 1),
-              ListTile(
-                leading: Icon(userProvider.isSeller ? Icons.shopping_bag : Icons.store, color: Colors.white),
-                title: Text(userProvider.isSeller ? 'Chế độ người mua' : 'Chế độ người bán', style: const TextStyle(color: Colors.white)),
-                onTap: () {
-                  userProvider.toggleRole();
-                  Navigator.pop(ctx);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.settings, color: Colors.white),
-                title: const Text('Cài đặt', style: TextStyle(color: Colors.white)),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsPage()));
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.logout, color: Colors.redAccent),
-                title: const Text('Đăng xuất', style: TextStyle(color: Colors.redAccent)),
-                onTap: () {
-                  userProvider.logout();
-                  Navigator.pop(ctx);
-                },
-              ),
+              
+              // Chế độ Người bán/Người mua
+              _buildMenuTile(context, 
+                userProvider.isSeller ? Icons.shopping_bag_outlined : Icons.storefront_outlined, 
+                userProvider.isSeller ? 'Chuyển sang chế độ Người mua' : 'Chuyển sang chế độ Người bán', () {
+                userProvider.toggleRole();
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(userProvider.isSeller ? "Đã bật chế độ NGƯỜI BÁN" : "Đã tắt chế độ NGƯỜI BÁN"))
+                );
+              }),
+
+              // Cài đặt tài khoản (Sửa Tên & Địa chỉ)
+              _buildMenuTile(context, Icons.settings_outlined, "Cài đặt tài khoản", () {
+                Navigator.pop(ctx);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsPage()));
+              }),
+
+              // Đơn mua hàng
+              _buildMenuTile(context, Icons.receipt_long_outlined, "Đơn mua hàng", () {
+                Navigator.pop(ctx);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const PurchasesScreen()));
+              }),
+
+              const Divider(color: Colors.grey, height: 1),
+              
+              // Đăng xuất
+              _buildMenuTile(context, Icons.logout, "Đăng xuất", () {
+                userProvider.logout();
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Đã đăng xuất")));
+              }, isDestructive: true),
             ],
           ),
         );
       },
+    );
+  }
+
+  Widget _buildMenuTile(BuildContext context, IconData icon, String title, VoidCallback onTap, {bool isDestructive = false}) {
+    return ListTile(
+      leading: Icon(icon, color: isDestructive ? Colors.redAccent : Colors.white),
+      title: Text(title, style: TextStyle(color: isDestructive ? Colors.redAccent : Colors.white, fontSize: 15)),
+      onTap: onTap,
     );
   }
 

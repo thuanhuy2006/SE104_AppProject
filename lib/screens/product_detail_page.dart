@@ -6,6 +6,7 @@ import '../constants/app_colors.dart';
 import '../models/app_models.dart';
 import '../providers/app_providers.dart';
 import 'cart_page.dart';
+import 'checkout_page.dart';
 
 class ProductDetailPage extends StatelessWidget {
   final Product product;
@@ -165,8 +166,9 @@ class ProductDetailPage extends StatelessWidget {
                   width: double.infinity, height: 50,
                   child: OutlinedButton(
                     onPressed: () {
+                      // Thêm sản phẩm vào giỏ hàng và chuyển sang trang thanh toán ngay
                       Provider.of<CartProvider>(context, listen: false).addItem(product.id, product.title, product.price, product.imageUrl);
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const EtsyCartPage()));
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const CheckoutPage()));
                     },
                     style: OutlinedButton.styleFrom(foregroundColor: etsyText, side: const BorderSide(color: etsyText, width: 1.5), shape: const StadiumBorder()),
                     child: const Text("Mua ngay", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),

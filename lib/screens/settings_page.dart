@@ -12,6 +12,7 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   late TextEditingController _nameController;
+  late TextEditingController _phoneController;
   late TextEditingController _addressController;
 
   @override
@@ -19,23 +20,38 @@ class _SettingsPageState extends State<SettingsPage> {
     super.initState();
     final user = Provider.of<UserProvider>(context, listen: false).currentUser;
     _nameController = TextEditingController(text: user?.name ?? "");
+    _phoneController = TextEditingController(text: user?.phoneNumber ?? "0901234567");
     _addressController = TextEditingController(text: user?.deliveryAddress ?? "Việt Nam");
   }
 
   @override
   void dispose() {
     _nameController.dispose();
+    _phoneController.dispose();
     _addressController.dispose();
     super.dispose();
   }
 
   void _saveSettings() {
+    if (_nameController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tên không được để trống')),
+      );
+      return;
+    }
+
+    // Cập nhật vào Provider
     Provider.of<UserProvider>(context, listen: false).updateUserInfo(
-      _nameController.text,
-      _addressController.text,
+      _nameController.text.trim(),
+      _phoneController.text.trim(),
+      _addressController.text.trim(),
     );
+
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Đã cập nhật thông tin thành công!')),
+      const SnackBar(
+        content: Text('✅ Đã lưu thay đổi thành công!'),
+        backgroundColor: Colors.green,
+      ),
     );
     Navigator.pop(context);
   }
@@ -53,51 +69,78 @@ class _SettingsPageState extends State<SettingsPage> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("Thông tin cá nhân", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text("THÔNG TIN CỦA BẠN", style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.bold)),
             const SizedBox(height: 20),
-            TextField(
-              controller: _nameController,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                labelText: "Tên người dùng",
-                labelStyle: const TextStyle(color: Colors.grey),
-                enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey.shade700)),
-                focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
-              ),
+            
+            _buildInputField("Tên hiển thị", _nameController, hint: "Nhập tên của bạn"),
+            const SizedBox(height: 25),
+
+            _buildInputField("Số điện thoại", _phoneController, hint: "Nhập số điện thoại", keyboardType: TextInputType.phone),
+            const SizedBox(height: 25),
+            
+            _buildInputField("Địa chỉ giao hàng", _addressController, hint: "Số nhà, tên đường, thành phố...", maxLines: 3),
+            
+            const SizedBox(height: 15),
+            const Text(
+              "* Thông tin này sẽ tự động hiển thị khi bạn thanh toán.",
+              style: TextStyle(color: Colors.grey, fontSize: 12, fontStyle: FontStyle.italic),
             ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: _addressController,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                labelText: "Địa chỉ giao hàng",
-                labelStyle: const TextStyle(color: Colors.grey),
-                enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey.shade700)),
-                focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
-              ),
-            ),
-            const SizedBox(height: 30),
+            
+            const SizedBox(height: 50),
+            
             SizedBox(
               width: double.infinity,
-              height: 50,
+              height: 55,
               child: ElevatedButton(
                 onPressed: _saveSettings,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: Colors.black,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                  elevation: 0,
                 ),
-                child: const Text("LƯU THAY ĐỔI", style: TextStyle(fontWeight: FontWeight.bold)),
+                child: const Text("LƯU THAY ĐỔI", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildInputField(String label, TextEditingController controller, {String? hint, int maxLines = 1, TextInputType keyboardType = TextInputType.text}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500)),
+        const SizedBox(height: 10),
+        TextField(
+          controller: controller,
+          maxLines: maxLines,
+          keyboardType: keyboardType,
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
+            filled: true,
+            fillColor: etsyCardColor,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.grey, width: 0.5),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.white, width: 1.5),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

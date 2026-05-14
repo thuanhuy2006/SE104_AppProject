@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../constants/app_colors.dart';
 import '../providers/app_providers.dart';
 import '../widgets/shared_widgets.dart';
+import 'checkout_page.dart';
 
 class EtsyCartPage extends StatelessWidget {
   const EtsyCartPage({super.key});
@@ -150,7 +151,7 @@ class EtsyCartPage extends StatelessWidget {
                         height: 50,
                         child: ElevatedButton(
                           onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Chuyển hướng sang Thanh toán...")));
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => const CheckoutPage()));
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,

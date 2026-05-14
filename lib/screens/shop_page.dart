@@ -1,139 +1,175 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
+import '../models/app_models.dart';
+import '../providers/app_providers.dart';
 import '../widgets/shared_widgets.dart';
+import 'product_detail_page.dart';
+import 'category_products_page.dart';
 
 class EtsyShopPage extends StatelessWidget {
   const EtsyShopPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final productProvider = Provider.of<ProductProvider>(context);
+    final products = productProvider.products;
+    final userProvider = Provider.of<UserProvider>(context);
+    final searchQuery = Provider.of<SearchProvider>(context).query;
+
+    // Logic tìm kiếm giống trang chủ để đảm bảo tính nhất quán
+    final filteredProducts = products.where((p) {
+      final title = p.title.toLowerCase();
+      final category = p.category.toLowerCase();
+      return title.contains(searchQuery) || category.contains(searchQuery);
+    }).toList();
+
     return Scaffold(
+      backgroundColor: etsyBackground,
       body: Column(
         children: [
           const EtsyHeader(),
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.only(bottom: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 15),
-                    child: Container(
-                      height: 120,
-                      decoration: BoxDecoration(color: const Color(0xFFF3EAC8), borderRadius: BorderRadius.circular(10)),
-                      clipBehavior: Clip.hardEdge,
-                      child: Row(
-                        children: [
-                          Expanded(
-                            flex: 3,
-                            child: Padding(
-                              padding: const EdgeInsets.all(15.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: const [
-                                  Text("Beautifully crafted\ndining finds, just for\nMom", style: TextStyle(color: Colors.black, fontSize: 16, fontFamily: 'Georgia')),
-                                  Text("Find her faves", style: TextStyle(color: Colors.black87, fontSize: 13)),
-                                ],
-                              ),
+            child: searchQuery.isNotEmpty 
+              ? _buildSearchResults(filteredProducts)
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.only(bottom: 20, top: 15),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 15),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text("Mua sắm theo danh mục", 
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)
                             ),
-                          ),
-                          Expanded(
-                            flex: 2,
-                            child: Image.network('https://i.etsystatic.com/15286468/r/il/15c102/2358897258/il_570xN.2358897258_50y4.jpg', fit: BoxFit.cover),
-                          )
-                        ],
+                            if (userProvider.isSeller)
+                              const Text("Chế độ bán hàng", style: TextStyle(color: Colors.deepOrange, fontSize: 12, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 15),
+                      
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 15),
+                        child: Wrap(
+                          spacing: 10, runSpacing: 10,
+                          children: [
+                            _buildCategoryCard(context, 'Trang sức', '💍'),
+                            _buildCategoryCard(context, 'Quần áo', '🧥'),
+                            _buildCategoryCard(context, 'Phụ kiện', '👜'),
+                            _buildCategoryCard(context, 'Giày dép', '👟'),
+                          ],
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 40),
+
+                      _buildDynamicSection(context, 'Trang sức', products),
+                      _buildDynamicSection(context, 'Quần áo', products),
+                      _buildDynamicSection(context, 'Phụ kiện', products),
+                      _buildDynamicSection(context, 'Giày dép', products),
+                    ],
                   ),
-                  const SizedBox(height: 25),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 15),
-                    child: Text("Shop by category", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
-                  ),
-                  const SizedBox(height: 15),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 15),
-                    child: Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
-                      children: [
-                        _buildCategoryCard('Jewelry', '💍'),
-                        _buildCategoryCard('Clothing', '🧥'),
-                        _buildCategoryCard('Home & Living', '🛋️'),
-                        _buildCategoryCard('Deals on Etsy', '🏷️'),
-                        _buildCategoryCard('Gift Ideas', '🎁'),
-                        _buildCategoryCard('Art & Collectibles', '🖼️'),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 15),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: const [
-                        Text("Home Decor", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-                        Text("Explore more", style: TextStyle(fontSize: 14, color: Color(0xFFA19CFF), fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-                  SizedBox(
-                    height: 180,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 15),
-                      children: [
-                        _buildHorizontalItem('https://i.etsystatic.com/12979269/r/il/f53db0/1049969032/il_570xN.1049969032_8y2g.jpg', 'Home Accents'),
-                        const SizedBox(width: 15),
-                        _buildHorizontalItem('https://i.etsystatic.com/7123617/r/il/b3d4f1/3091107297/il_570xN.3091107297_d6k3.jpg', 'Pillows & Throw Blankets'),
-                      ],
-                    ),
-                  )
-                ],
-              ),
-            ),
+                ),
           )
         ],
       ),
     );
   }
 
-  Widget _buildCategoryCard(String title, String emoji) {
-    return Container(
-      width: 170,
-      height: 60,
-      decoration: BoxDecoration(color: etsyCardColor, borderRadius: BorderRadius.circular(10)),
-      padding: const EdgeInsets.symmetric(horizontal: 15),
-      child: Row(
-        children: [
-          Text(emoji, style: const TextStyle(fontSize: 24)),
-          const SizedBox(width: 10),
-          Expanded(child: Text(title, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500))),
-        ],
+  Widget _buildSearchResults(List<Product> filteredProducts) {
+    if (filteredProducts.isEmpty) {
+      return const Center(child: Text("Không tìm thấy sản phẩm", style: TextStyle(color: Colors.grey)));
+    }
+    return GridView.builder(
+      padding: const EdgeInsets.all(15),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2, childAspectRatio: 0.72, crossAxisSpacing: 15, mainAxisSpacing: 20
+      ),
+      itemCount: filteredProducts.length,
+      itemBuilder: (context, index) => EtsyProductCard(product: filteredProducts[index]),
+    );
+  }
+
+  Widget _buildCategoryCard(BuildContext context, String title, String emoji) {
+    return InkWell(
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CategoryProductsPage(categoryName: title))),
+      child: Container(
+        width: (MediaQuery.of(context).size.width - 40) / 2,
+        height: 60,
+        decoration: BoxDecoration(
+          color: etsyCardColor,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.grey.shade800)
+        ),
+        child: Center(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(emoji, style: const TextStyle(fontSize: 20)),
+              const SizedBox(width: 8),
+              Text(title, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500)),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildHorizontalItem(String img, String title) {
-    return SizedBox(
-      width: 160,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(borderRadius: BorderRadius.circular(10), color: Colors.grey[800]),
-              clipBehavior: Clip.hardEdge,
-              child: Image.network(img, fit: BoxFit.cover, width: 160),
+  Widget _buildDynamicSection(BuildContext context, String category, List<Product> allProducts) {
+    final categoryProducts = allProducts.where((p) => p.category == category).toList();
+    if (categoryProducts.isEmpty) return const SizedBox.shrink();
+
+    final p1 = categoryProducts.first;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 15),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(category, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+              InkWell(
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CategoryProductsPage(categoryName: category))),
+                child: const Text("Xem tất cả", style: TextStyle(fontSize: 14, color: Colors.deepOrange)),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 15),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 15),
+          child: InkWell(
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProductDetailPage(product: p1))),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AspectRatio(
+                  aspectRatio: 16 / 9,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.grey[800],
+                    ),
+                    clipBehavior: Clip.hardEdge,
+                    child: Image.network(p1.imageUrl, fit: BoxFit.cover, 
+                      errorBuilder: (ctx, err, stack) => const Icon(Icons.image, color: Colors.grey, size: 50)),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(p1.title, style: const TextStyle(color: Colors.white, fontSize: 15), maxLines: 1, overflow: TextOverflow.ellipsis),
+                Text("${p1.price} đ", style: const TextStyle(color: Colors.grey, fontSize: 13)),
+              ],
             ),
           ),
-          const SizedBox(height: 8),
-          Text(title, style: const TextStyle(color: Colors.white, fontSize: 14)),
-        ],
-      ),
+        ),
+        const SizedBox(height: 35),
+      ],
     );
   }
 }

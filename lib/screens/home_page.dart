@@ -11,11 +11,19 @@ class EtsyHomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Lấy thông tin role từ UserProvider (giả định đã có)
     final userProvider = Provider.of<UserProvider>(context);
     final productProvider = Provider.of<ProductProvider>(context);
+    final searchQuery = Provider.of<SearchProvider>(context).query;
+
+    // Lọc sản phẩm dựa trên nội dung tìm kiếm
+    final filteredProducts = productProvider.products.where((p) {
+      final title = p.title.toLowerCase();
+      final category = p.category.toLowerCase();
+      return title.contains(searchQuery) || category.contains(searchQuery);
+    }).toList();
 
     return Scaffold(
+      backgroundColor: etsyBackground,
       body: Column(
         children: [
           const EtsyHeader(),
@@ -25,8 +33,8 @@ class EtsyHomePage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Banner chào mừng hoặc khuyến mãi
-                  const GreetingBanner(), 
+                  // Banner chào mừng (Ẩn đi khi đang tìm kiếm để nhường chỗ cho kết quả)
+                  if (searchQuery.isEmpty) const GreetingBanner(), 
                   
                   const SizedBox(height: 25),
                   Padding(
@@ -34,14 +42,17 @@ class EtsyHomePage extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text("Gợi ý cho bạn", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                        Text(
+                          searchQuery.isEmpty ? "Gợi ý cho bạn" : "Kết quả tìm kiếm cho '$searchQuery'", 
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)
+                        ),
                         if (userProvider.isSeller)
                           ElevatedButton.icon(
                             onPressed: () {
                               Navigator.push(context, MaterialPageRoute(builder: (_) => const AddProductPage()));
                             },
                             icon: const Icon(Icons.add_a_photo, size: 18),
-                            label: const Text("Thêm đồ bán"),
+                            label: const Text("Đăng đồ bán"),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.deepOrange,
                               foregroundColor: Colors.white,
@@ -53,23 +64,32 @@ class EtsyHomePage extends StatelessWidget {
                   ),
                   const SizedBox(height: 15),
 
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 15),
-                    child: GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: 0.72,
-                        crossAxisSpacing: 15,
-                        mainAxisSpacing: 20,
+                  if (filteredProducts.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.all(40.0),
+                      child: Center(
+                        child: Text("Không tìm thấy sản phẩm nào khớp với từ khóa của bạn.", 
+                          textAlign: TextAlign.center, style: TextStyle(color: Colors.grey)),
                       ),
-                      itemCount: productProvider.products.length,
-                      itemBuilder: (context, index) {
-                        return EtsyProductCard(product: productProvider.products[index]);
-                      },
-                    ),
-                  )
+                    )
+                  else
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 15),
+                      child: GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          childAspectRatio: 0.72,
+                          crossAxisSpacing: 15,
+                          mainAxisSpacing: 20,
+                        ),
+                        itemCount: filteredProducts.length,
+                        itemBuilder: (context, index) {
+                          return EtsyProductCard(product: filteredProducts[index]);
+                        },
+                      ),
+                    )
                 ],
               ),
             ),
@@ -89,7 +109,10 @@ class GreetingBanner extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 15),
       child: Container(
         height: 140,
-        decoration: BoxDecoration(color: const Color(0xFFF3EAC8), borderRadius: BorderRadius.circular(12)),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF3EAC8), 
+          borderRadius: BorderRadius.circular(12)
+        ),
         clipBehavior: Clip.hardEdge,
         child: Row(
           children: [
@@ -101,16 +124,20 @@ class GreetingBanner extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text("Chào mừng bạn quay lại!", style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+                    Text("Chào mừng bạn!", style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
                     SizedBox(height: 10),
-                    Text("Hôm nay bạn muốn mua gì hay đăng bán gì không?", style: TextStyle(color: Colors.black87, fontSize: 13)),
+                    Text("Bạn muốn mua gì hay đăng bán gì hôm nay?", style: TextStyle(color: Colors.black87, fontSize: 13)),
                   ],
                 ),
               ),
             ),
             Expanded(
               flex: 2,
-              child: Image.network('https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=500&q=60', fit: BoxFit.cover, height: double.infinity),
+              child: Image.network(
+                'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=500&q=60', 
+                fit: BoxFit.cover, 
+                height: double.infinity
+              ),
             )
           ],
         ),
