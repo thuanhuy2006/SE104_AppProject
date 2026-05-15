@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_providers.dart';
 import '../constants/app_colors.dart';
+import '../services/database.dart';
 import 'register_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -15,18 +16,20 @@ class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  void _login() {
-    final success = Provider.of<UserProvider>(context, listen: false).login(
+  Future<void> _login() async {
+    final success = await Provider.of<UserProvider>(context, listen: false).login(
       _emailController.text,
       _passwordController.text,
     );
 
-    if (success) {
-      Navigator.pop(context);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Email hoặc mật khẩu không đúng')),
-      );
+    if (mounted) {
+      if (success) {
+        Navigator.pop(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Email hoặc mật khẩu không đúng')),
+        );
+      }
     }
   }
 

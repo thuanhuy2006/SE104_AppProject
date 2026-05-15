@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/app_models.dart';
 import '../providers/app_providers.dart';
 import '../constants/app_colors.dart';
+import '../services/database.dart';
 
 class AddProductPage extends StatefulWidget {
   const AddProductPage({super.key});

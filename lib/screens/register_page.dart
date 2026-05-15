@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_providers.dart';
 import '../constants/app_colors.dart';
+import '../services/database.dart';
+import 'personal_info_page.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -15,20 +17,25 @@ class _RegisterPageState extends State<RegisterPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  void _register() {
+  Future<void> _register() async {
     if (_nameController.text.isEmpty || _emailController.text.isEmpty || _passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vui lòng điền đầy đủ thông tin')));
       return;
     }
 
-    Provider.of<UserProvider>(context, listen: false).register(
+    final success = await Provider.of<UserProvider>(context, listen: false).register(
       _nameController.text,
       _emailController.text,
       _passwordController.text,
     );
     
-    Navigator.of(context).popUntil((route) => route.isFirst);
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Đăng ký thành công!')));
+    if (mounted) {
+      if (success) {
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const PersonalInfoPage()));
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Đăng ký thất bại. Email có thể đã được sử dụng.')));
+      }
+    }
   }
 
   @override
