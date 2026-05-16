@@ -8,6 +8,7 @@ import 'shop_page.dart';
 import 'favorite_page.dart';
 import 'cart_page.dart';
 import 'you_screen.dart';
+import 'chat_list_page.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -19,20 +20,21 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen>{
   int _currentIndex = 0;
 
-  final List<Widget> _pages = [
-    const EtsyHomePage(),
-    const EtsyShopPage(),
-    const FavoritePage(),
-    const YouScreen(), // Tab mới
-    const EtsyCartPage(),
-  ];
-
   @override
   Widget build(BuildContext context) {
     final cartCount = Provider.of<CartProvider>(context).itemCount;
+    final isSeller = Provider.of<UserProvider>(context).isSeller;
+
+    final List<Widget> pages = [
+      const EtsyHomePage(),
+      const EtsyShopPage(),
+      const FavoritePage(),
+      const YouScreen(),
+      isSeller ? const ChatListPage() : const EtsyCartPage(),
+    ];
 
     return Scaffold(
-      body: _pages[_currentIndex],
+      body: pages[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         backgroundColor: etsyBackground,
@@ -60,25 +62,31 @@ class _MainScreenState extends State<MainScreen>{
             icon: Icon(_currentIndex == 3 ? Icons.person : Icons.person_outline),
             label: 'Bạn',
           ),
-          BottomNavigationBarItem(
-            icon: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                const Icon(Icons.shopping_cart_outlined),
-                if (cartCount > 0)
-                  Positioned(
-                    right: -5, top: -5,
-                    child: Container(
-                      padding: const EdgeInsets.all(2),
-                      decoration: const BoxDecoration(color: Colors.deepOrange, shape: BoxShape.circle),
-                      constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
-                      child: Text('$cartCount', style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
-                    ),
-                  )
-              ],
+          if (isSeller)
+            BottomNavigationBarItem(
+              icon: Icon(_currentIndex == 4 ? Icons.chat : Icons.chat_bubble_outline),
+              label: 'Liên hệ',
+            )
+          else
+            BottomNavigationBarItem(
+              icon: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  const Icon(Icons.shopping_cart_outlined),
+                  if (cartCount > 0)
+                    Positioned(
+                      right: -5, top: -5,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: const BoxDecoration(color: Colors.deepOrange, shape: BoxShape.circle),
+                        constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
+                        child: Text('$cartCount', style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+                      ),
+                    )
+                ],
+              ),
+              label: 'Giỏ hàng',
             ),
-            label: 'Giỏ hàng',
-          ),
         ],
       ),
     );

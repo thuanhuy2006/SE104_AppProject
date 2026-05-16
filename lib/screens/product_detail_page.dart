@@ -7,6 +7,7 @@ import '../models/app_models.dart';
 import '../providers/app_providers.dart';
 import 'cart_page.dart';
 import 'checkout_page.dart';
+import 'chat_room_page.dart';
 
 class ProductDetailPage extends StatelessWidget {
   final Product product;
@@ -234,87 +235,115 @@ class ProductDetailPage extends StatelessWidget {
                 top: BorderSide(color: Colors.grey.shade800, width: 0.5),
               ),
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+            child: Row(
               children: [
-                SizedBox(
-                  width: double.infinity,
+                Container(
                   height: 50,
-                  child: ElevatedButton(
+                  width: 50,
+                  margin: const EdgeInsets.only(right: 12),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: etsyText, width: 1.5),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.chat_bubble_outline, color: etsyText),
                     onPressed: () {
-                      final cart = Provider.of<CartProvider>(
+                      Navigator.push(
                         context,
-                        listen: false,
-                      );
-                      cart.addItem(
-                        product.id,
-                        product.title,
-                        product.price,
-                        product.imageUrl,
-                      );
-                      Provider.of<UserProvider>(
-                        context,
-                        listen: false,
-                      ).syncCartToFirebase(cart.items.values.toList());
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Đã thêm vào giỏ hàng!"),
-                          duration: Duration(milliseconds: 1500),
+                        MaterialPageRoute(
+                          builder: (_) => const ChatRoomPage(
+                            receiverId: 'admin',
+                            receiverName: 'Chủ shop',
+                          ),
                         ),
                       );
                     },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: etsyText,
-                      foregroundColor: Colors.black,
-                      shape: const StadiumBorder(),
-                    ),
-                    child: const Text(
-                      "Thêm vào giỏ hàng",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
                   ),
                 ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: OutlinedButton(
-                    onPressed: () {
-                      // Thêm sản phẩm vào giỏ hàng và chuyển sang trang thanh toán ngay
-                      final cart = Provider.of<CartProvider>(
-                        context,
-                        listen: false,
-                      );
-                      cart.addItem(
-                        product.id,
-                        product.title,
-                        product.price,
-                        product.imageUrl,
-                      );
-                      Provider.of<UserProvider>(
-                        context,
-                        listen: false,
-                      ).syncCartToFirebase(cart.items.values.toList());
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const CheckoutPage()),
-                      );
-                    },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: etsyText,
-                      side: const BorderSide(color: etsyText, width: 1.5),
-                      shape: const StadiumBorder(),
-                    ),
-                    child: const Text(
-                      "Mua ngay",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            final cart = Provider.of<CartProvider>(
+                              context,
+                              listen: false,
+                            );
+                            cart.addItem(
+                              product.id,
+                              product.title,
+                              product.price,
+                              product.imageUrl,
+                            );
+                            Provider.of<UserProvider>(
+                              context,
+                              listen: false,
+                            ).syncCartToFirebase(cart.items.values.toList());
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Đã thêm vào giỏ hàng!"),
+                                duration: Duration(milliseconds: 1500),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: etsyText,
+                            foregroundColor: Colors.black,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          child: const Text(
+                            "Thêm vào giỏ",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: OutlinedButton(
+                          onPressed: () {
+                            final cart = Provider.of<CartProvider>(
+                              context,
+                              listen: false,
+                            );
+                            cart.addItem(
+                              product.id,
+                              product.title,
+                              product.price,
+                              product.imageUrl,
+                            );
+                            Provider.of<UserProvider>(
+                              context,
+                              listen: false,
+                            ).syncCartToFirebase(cart.items.values.toList());
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const CheckoutPage()),
+                            );
+                          },
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: etsyText,
+                            side: const BorderSide(color: etsyText, width: 1.5),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          child: const Text(
+                            "Mua ngay",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],

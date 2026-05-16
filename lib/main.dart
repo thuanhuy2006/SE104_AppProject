@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'providers/app_providers.dart';
 import 'screens/main_screen.dart';
+import 'screens/login_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -45,8 +46,33 @@ class EtsyCloneApp extends StatelessWidget {
           fontFamily: 'Roboto',
           useMaterial3: true,
         ),
-        home: const MainScreen(),
+        home: const AuthWrapper(),
       ),
+    );
+  }
+}
+
+class AuthWrapper extends StatelessWidget {
+  const AuthWrapper({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<UserProvider>(
+      builder: (context, userProvider, child) {
+        if (userProvider.isInitializing) {
+          return const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(color: Colors.deepOrange),
+            ),
+          );
+        }
+
+        if (userProvider.isLoggedIn) {
+          return const MainScreen();
+        }
+
+        return const LoginPage();
+      },
     );
   }
 }

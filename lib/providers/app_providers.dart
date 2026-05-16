@@ -9,11 +9,35 @@ class UserProvider with ChangeNotifier {
   UserModel? _currentUser;
   UserRole _role = UserRole.buyer;
   bool _isLoggedIn = false;
+  bool _isInitializing = true;
   final List<Map<String, dynamic>> _myOrders = [];
+
+  UserProvider() {
+    _initAuth();
+  }
+
+  Future<void> _initAuth() async {
+    final currentUser = firebase_auth.FirebaseAuth.instance.currentUser;
+    if (currentUser != null) {
+      UserModel? fetchedUser = await DatabaseService().getUser(currentUser.uid);
+      if (fetchedUser != null) {
+        _currentUser = fetchedUser;
+        _isLoggedIn = true;
+        _role = _currentUser?.role == 'seller'
+            ? UserRole.seller
+            : UserRole.buyer;
+      } else {
+        await firebase_auth.FirebaseAuth.instance.signOut();
+      }
+    }
+    _isInitializing = false;
+    notifyListeners();
+  }
 
   UserModel? get currentUser => _currentUser;
   UserRole get role => _role;
   bool get isLoggedIn => _isLoggedIn;
+  bool get isInitializing => _isInitializing;
   bool get isSeller => _role == UserRole.seller;
   List<Map<String, dynamic>> get myOrders => _myOrders;
 
@@ -147,27 +171,46 @@ class UserProvider with ChangeNotifier {
     }
   }
 
-  Future<bool> register(String name, String email, String password) async {
+  Future<bool> register(String name, String email, String password, {bool isSellerRole = false}) async {
     try {
       final cred = await firebase_auth.FirebaseAuth.instance
           .createUserWithEmailAndPassword(email: email, password: password);
       if (cred.user != null) {
-        BuyerModel newUser = BuyerModel(
-          uid: cred.user!.uid,
-          email: email,
-          name: name,
-          password: password,
-          address: '',
-          phoneNumber: '',
-          bio: '',
-          purchaseHistory: [],
-          currentCart: [],
-          discountCodes: [],
-        );
-        await DatabaseService().saveBuyer(newUser);
-        _currentUser = newUser;
+        if (isSellerRole) {
+          SellerModel newUser = SellerModel(
+            uid: cred.user!.uid,
+            email: email,
+            name: name,
+            password: password,
+            address: '',
+            phoneNumber: '',
+            bio: '',
+            revenue: 0,
+            salesHistory: [],
+            itemsSelling: [],
+          );
+          await DatabaseService().saveSeller(newUser);
+          _currentUser = newUser;
+          _role = UserRole.seller;
+        } else {
+          BuyerModel newUser = BuyerModel(
+            uid: cred.user!.uid,
+            email: email,
+            name: name,
+            password: password,
+            address: '',
+            phoneNumber: '',
+            bio: '',
+            purchaseHistory: [],
+            currentCart: [],
+            discountCodes: [],
+          );
+          await DatabaseService().saveBuyer(newUser);
+          _currentUser = newUser;
+          _role = UserRole.buyer;
+        }
+        
         _isLoggedIn = true;
-        _role = UserRole.buyer;
         notifyListeners();
         return true;
       }

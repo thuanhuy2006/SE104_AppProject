@@ -235,9 +235,62 @@ class DatabaseService {
   }
 
   /// Thêm sản phẩm đang bán cho người bán
+  // THÊM SẢN PHẨM ĐANG BÁN
   Future<void> addSellingItem(String uid, Map<String, dynamic> newItem) async {
     await _db.collection('users').doc(uid).update({
       'itemsSelling': FieldValue.arrayUnion([newItem]),
     });
+  }
+
+  // CÁC HÀM TIỆN ÍCH DÀNH CHO CHAT (NHẮN TIN)
+
+  /// Gửi tin nhắn
+  Future<void> sendMessage(String senderId, String receiverId, String text) async {
+    final String chatId = getChatRoomId(senderId, receiverId);
+    final timestamp = FieldValue.serverTimestamp();
+
+    final messageData = {
+      'senderId': senderId,
+      'receiverId': receiverId,
+      'text': text,
+      'timestamp': timestamp,
+    };
+
+    // Lưu tin nhắn vào sub-collection
+    await _db.collection('chats').doc(chatId).collection('messages').add(messageData);
+
+    // Cập nhật thông tin phòng chat
+    await _db.collection('chats').doc(chatId).set({
+      'participants': [senderId, receiverId],
+      'lastMessage': text,
+      'lastUpdated': timestamp,
+    }, SetOptions(merge: true));
+  }
+
+  /// Lấy danh sách tin nhắn của một phòng chat
+  Stream<QuerySnapshot> getMessages(String senderId, String receiverId) {
+    final String chatId = getChatRoomId(senderId, receiverId);
+    return _db
+        .collection('chats')
+        .doc(chatId)
+        .collection('messages')
+        .orderBy('timestamp', descending: true)
+        .snapshots();
+  }
+
+  /// Lấy danh sách phòng chat của một user
+  Stream<QuerySnapshot> getChatRooms(String userId) {
+    return _db
+        .collection('chats')
+        .where('participants', arrayContains: userId)
+        .orderBy('lastUpdated', descending: true)
+        .snapshots();
+  }
+
+  /// Hàm tạo ID phòng chat duy nhất giữa 2 người
+  String getChatRoomId(String user1, String user2) {
+    List<String> users = [user1, user2];
+    users.sort();
+    return users.join('_');
   }
 }
