@@ -251,9 +251,10 @@ class ProductDetailPage extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const ChatRoomPage(
-                            receiverId: 'admin',
-                            receiverName: 'Chủ shop',
+                          builder: (_) => ChatRoomPage(
+                            receiverId: product.sellerId,
+                            receiverName: 'Người bán',
+                            product: product,
                           ),
                         ),
                       );

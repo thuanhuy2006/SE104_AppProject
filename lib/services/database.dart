@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models/app_models.dart';
 
 /// Lớp cơ bản đại diện cho người dùng
 class UserModel {
@@ -292,5 +293,28 @@ class DatabaseService {
     List<String> users = [user1, user2];
     users.sort();
     return users.join('_');
+  }
+
+  // CÁC HÀM TIỆN ÍCH DÀNH CHO SẢN PHẨM (PRODUCT)
+  
+  /// Lưu sản phẩm mới lên Firestore
+  Future<void> saveProduct(Product product) async {
+    await _db
+        .collection('products')
+        .doc(product.id)
+        .set(product.toMap(), SetOptions(merge: true));
+  }
+
+  /// Lấy danh sách tất cả sản phẩm
+  Future<List<Product>> getProducts() async {
+    try {
+      final snapshot = await _db.collection('products').get();
+      return snapshot.docs
+          .map((doc) => Product.fromMap(doc.data()))
+          .toList();
+    } catch (e) {
+      print('Lỗi khi lấy danh sách sản phẩm: $e');
+      return [];
+    }
   }
 }

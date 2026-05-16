@@ -2,18 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_providers.dart';
 import '../constants/app_colors.dart';
-import '../services/database.dart';
 import 'personal_info_page.dart';
-import 'seller_register_page.dart';
+import 'register_page.dart';
 
-class RegisterPage extends StatefulWidget {
-  const RegisterPage({super.key});
+class SellerRegisterPage extends StatefulWidget {
+  const SellerRegisterPage({super.key});
 
   @override
-  State<RegisterPage> createState() => _RegisterPageState();
+  State<SellerRegisterPage> createState() => _SellerRegisterPageState();
 }
 
-class _RegisterPageState extends State<RegisterPage> {
+class _SellerRegisterPageState extends State<SellerRegisterPage> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -28,7 +27,7 @@ class _RegisterPageState extends State<RegisterPage> {
       _nameController.text,
       _emailController.text,
       _passwordController.text,
-      isSellerRole: false,
+      isSellerRole: true,
     );
     
     if (mounted) {
@@ -43,17 +42,17 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Đăng ký'), backgroundColor: etsyBackground),
+      appBar: AppBar(title: const Text('Đăng ký Người bán'), backgroundColor: etsyBackground),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text('Tạo tài khoản mới', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            const Text('Tạo tài khoản bán hàng', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
             const SizedBox(height: 30),
             TextField(
               controller: _nameController,
-              decoration: const InputDecoration(labelText: 'Họ và tên', border: OutlineInputBorder()),
+              decoration: const InputDecoration(labelText: 'Tên cửa hàng/Họ và tên', border: OutlineInputBorder()),
             ),
             const SizedBox(height: 20),
             TextField(
@@ -72,8 +71,8 @@ class _RegisterPageState extends State<RegisterPage> {
               height: 50,
               child: ElevatedButton(
                 onPressed: _register,
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.black),
-                child: const Text('ĐĂNG KÝ', style: TextStyle(fontWeight: FontWeight.bold)),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.deepOrange, foregroundColor: Colors.white),
+                child: const Text('ĐĂNG KÝ BÁN HÀNG', style: TextStyle(fontWeight: FontWeight.bold)),
               ),
             ),
             const SizedBox(height: 20),
@@ -81,11 +80,11 @@ class _RegisterPageState extends State<RegisterPage> {
               onPressed: () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (_) => const SellerRegisterPage()),
+                  MaterialPageRoute(builder: (_) => const RegisterPage()),
                 );
               },
               child: const Text(
-                'Bạn là người bán hàng?',
+                'Bạn là người mua hàng?',
                 style: TextStyle(color: Colors.white70, decoration: TextDecoration.underline),
               ),
             ),

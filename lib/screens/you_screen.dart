@@ -5,6 +5,7 @@ import '../constants/app_colors.dart';
 import 'profile_screen.dart';
 import 'login_page.dart';
 import 'purchases_screen.dart';
+import 'chat_list_page.dart';
 
 class YouScreen extends StatelessWidget {
   const YouScreen({super.key});
@@ -59,24 +60,8 @@ class YouScreen extends StatelessWidget {
             _buildDivider(),
             
             _buildMenuItem("Tin nhắn", context, () {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Tính năng Tin nhắn đang phát triển")));
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const ChatListPage()));
             }),
-            _buildDivider(),
-
-            // Nút chuyển đổi chế độ Người bán (Quick Toggle)
-            ListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              leading: Icon(userProvider.isSeller ? Icons.store : Icons.person_outline, color: Colors.white),
-              title: Text(
-                userProvider.isSeller ? "Đang ở chế độ Người bán" : "Chuyển sang chế độ Người bán",
-                style: const TextStyle(color: Colors.white, fontSize: 16),
-              ),
-              trailing: Switch(
-                value: userProvider.isSeller,
-                onChanged: (val) => userProvider.toggleRole(),
-                activeColor: Colors.deepOrange,
-              ),
-            ),
             _buildDivider(),
 
             const SizedBox(height: 30),

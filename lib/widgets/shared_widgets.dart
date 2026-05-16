@@ -53,17 +53,6 @@ class EtsyHeader extends StatelessWidget {
               ),
               const Divider(color: Colors.grey, height: 1),
               
-              // Chế độ Người bán/Người mua
-              _buildMenuTile(context, 
-                userProvider.isSeller ? Icons.shopping_bag_outlined : Icons.storefront_outlined, 
-                userProvider.isSeller ? 'Chuyển sang chế độ Người mua' : 'Chuyển sang chế độ Người bán', () {
-                userProvider.toggleRole();
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(userProvider.isSeller ? "Đã bật chế độ NGƯỜI BÁN" : "Đã tắt chế độ NGƯỜI BÁN"))
-                );
-              }),
-
               // Cài đặt tài khoản (Sửa Tên & Địa chỉ)
               _buildMenuTile(context, Icons.settings_outlined, "Cài đặt tài khoản", () {
                 Navigator.pop(ctx);

@@ -86,33 +86,6 @@ class ProfileScreen extends StatelessWidget {
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsPage()))
               ),
             ),
-
-            const SizedBox(height: 25),
-            const Text("QUẢN LÝ CỬA HÀNG", style: TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
-            Container(
-              decoration: BoxDecoration(
-                color: etsyCardColor,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: ListTile(
-                leading: Icon(userProvider.isSeller ? Icons.store : Icons.person_outline, color: Colors.white),
-                title: Text(
-                  userProvider.isSeller ? "Đang ở chế độ Người bán" : "Đang ở chế độ Người mua", 
-                  style: const TextStyle(color: Colors.white, fontSize: 15)
-                ),
-                trailing: Switch(
-                  value: userProvider.isSeller,
-                  onChanged: (val) {
-                    userProvider.toggleRole();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(userProvider.isSeller ? "Đã chuyển sang chế độ NGƯỜI BÁN" : "Đã chuyển sang chế độ NGƯỜI MUA"))
-                    );
-                  },
-                  activeColor: Colors.deepOrange,
-                ),
-              ),
-            ),
           ],
         ),
       ),

@@ -41,11 +41,6 @@ class UserProvider with ChangeNotifier {
   bool get isSeller => _role == UserRole.seller;
   List<Map<String, dynamic>> get myOrders => _myOrders;
 
-  void toggleRole() {
-    _role = _role == UserRole.buyer ? UserRole.seller : UserRole.buyer;
-    notifyListeners();
-  }
-
   // Cập nhật đầy đủ 3 thông tin: Tên, SĐT, Địa chỉ
   Future<void> updateUserInfo(
     String newName,
@@ -171,7 +166,7 @@ class UserProvider with ChangeNotifier {
     }
   }
 
-  Future<bool> register(String name, String email, String password, {bool isSellerRole = false}) async {
+  Future<String?> register(String name, String email, String password, {bool isSellerRole = false}) async {
     try {
       final cred = await firebase_auth.FirebaseAuth.instance
           .createUserWithEmailAndPassword(email: email, password: password);
@@ -185,7 +180,7 @@ class UserProvider with ChangeNotifier {
             address: '',
             phoneNumber: '',
             bio: '',
-            revenue: 0,
+            revenue: 0.0,
             salesHistory: [],
             itemsSelling: [],
           );
@@ -212,12 +207,24 @@ class UserProvider with ChangeNotifier {
         
         _isLoggedIn = true;
         notifyListeners();
-        return true;
+        return null;
       }
-      return false;
+      return "Không thể tạo tài khoản.";
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      print('Register FirebaseAuthException: ${e.code}');
+      switch (e.code) {
+        case 'email-already-in-use':
+          return 'Email này đã được sử dụng.';
+        case 'invalid-email':
+          return 'Email không hợp lệ.';
+        case 'weak-password':
+          return 'Mật khẩu quá yếu (cần ít nhất 6 ký tự).';
+        default:
+          return 'Đăng ký thất bại: ${e.message}';
+      }
     } catch (e) {
       print('Register error: $e');
-      return false;
+      return 'Đã xảy ra lỗi: $e';
     }
   }
 
@@ -232,13 +239,39 @@ class UserProvider with ChangeNotifier {
 }
 
 class ProductProvider with ChangeNotifier {
-  final List<Product> _products = [...ProductData.products];
+  List<Product> _products = [];
+  bool _isLoading = false;
+
   List<Product> get products => _products;
+  bool get isLoading => _isLoading;
 
-  List<Product> get myProducts =>
-      _products.where((p) => p.id.startsWith('seller_')).toList();
+  ProductProvider() {
+    _fetchProducts();
+  }
 
-  void addProduct(Product product) {
+  Future<void> _fetchProducts() async {
+    _isLoading = true;
+    notifyListeners();
+    
+    _products = await DatabaseService().getProducts();
+    if (_products.isEmpty) {
+      // Initialize with mock data if empty
+      _products = [...ProductData.products];
+      for (var product in _products) {
+        await DatabaseService().saveProduct(product);
+      }
+    }
+    
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  List<Product> getProductsBySeller(String sellerId) {
+    return _products.where((p) => p.sellerId == sellerId).toList();
+  }
+
+  Future<void> addProduct(Product product) async {
+    await DatabaseService().saveProduct(product);
     _products.insert(0, product);
     notifyListeners();
   }

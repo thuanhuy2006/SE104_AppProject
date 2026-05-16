@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../models/app_models.dart';
 import '../providers/app_providers.dart';
 import '../constants/app_colors.dart';
-import '../services/database.dart';
 
 class AddProductPage extends StatefulWidget {
   const AddProductPage({super.key});
@@ -16,6 +15,8 @@ class _AddProductPageState extends State<AddProductPage> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _priceController = TextEditingController();
+  final _stockQuantityController = TextEditingController();
+  final _voucherController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _imageUrlController = TextEditingController();
   String _selectedCategory = 'Quần áo';
@@ -26,6 +27,8 @@ class _AddProductPageState extends State<AddProductPage> {
   void dispose() {
     _titleController.dispose();
     _priceController.dispose();
+    _stockQuantityController.dispose();
+    _voucherController.dispose();
     _descriptionController.dispose();
     _imageUrlController.dispose();
     super.dispose();
@@ -33,6 +36,16 @@ class _AddProductPageState extends State<AddProductPage> {
 
   void _saveProduct() {
     if (_formKey.currentState!.validate()) {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final currentUser = userProvider.currentUser;
+      
+      if (currentUser == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Lỗi: Bạn chưa đăng nhập!')),
+        );
+        return;
+      }
+
       final newProduct = Product(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         title: _titleController.text.trim(),
@@ -42,6 +55,10 @@ class _AddProductPageState extends State<AddProductPage> {
             ? _imageUrlController.text.trim() 
             : 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=500', 
         category: _selectedCategory,
+        sellerId: currentUser.uid,
+        stockQuantity: int.tryParse(_stockQuantityController.text.trim()) ?? 1,
+        vouchers: _voucherController.text.trim().isNotEmpty ? [_voucherController.text.trim()] : [],
+        revenue: 0.0,
       );
 
       Provider.of<ProductProvider>(context, listen: false).addProduct(newProduct);
@@ -109,6 +126,15 @@ class _AddProductPageState extends State<AddProductPage> {
             ),
             
             const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(child: _buildTextField(_stockQuantityController, "Số lượng kho", "Ví dụ: 10", isNumber: true)),
+                const SizedBox(width: 15),
+                Expanded(child: _buildTextField(_voucherController, "Mã giảm giá (nếu có)", "SALE20", isRequired: false)),
+              ],
+            ),
+
+            const SizedBox(height: 20),
             _buildTextField(_descriptionController, "Mô tả chi tiết", "Mô tả sản phẩm của bạn...", maxLines: 4),
             
             const SizedBox(height: 20),
@@ -141,7 +167,7 @@ class _AddProductPageState extends State<AddProductPage> {
             ),
             
             const SizedBox(height: 15),
-            _buildTextField(_imageUrlController, "Hoặc dán URL ảnh", "https://..."),
+            _buildTextField(_imageUrlController, "Hoặc dán URL ảnh", "https://...", isRequired: false),
             
             const SizedBox(height: 40),
             SizedBox(
@@ -162,7 +188,7 @@ class _AddProductPageState extends State<AddProductPage> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String label, String hint, {bool isNumber = false, int maxLines = 1}) {
+  Widget _buildTextField(TextEditingController controller, String label, String hint, {bool isNumber = false, int maxLines = 1, bool isRequired = true}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -181,7 +207,7 @@ class _AddProductPageState extends State<AddProductPage> {
             enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey.shade800)),
             focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Colors.white)),
           ),
-          validator: (value) => value == null || value.isEmpty ? 'Không được để trống' : null,
+          validator: isRequired ? (value) => value == null || value.isEmpty ? 'Không được để trống' : null : null,
         ),
       ],
     );
