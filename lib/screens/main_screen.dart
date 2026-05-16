@@ -17,7 +17,7 @@ class MainScreen extends StatefulWidget {
   State<MainScreen> createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen>{
+class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
   @override
@@ -35,59 +35,82 @@ class _MainScreenState extends State<MainScreen>{
 
     return Scaffold(
       body: pages[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: etsyBackground,
-        currentIndex: _currentIndex,
-        selectedItemColor: Colors.white,
-        unselectedItemColor: Colors.grey.shade600,
-        showUnselectedLabels: true,
-        selectedFontSize: 11,
-        unselectedFontSize: 11,
-        onTap: (index) => setState(() => _currentIndex = index),
-        items: [
-          BottomNavigationBarItem(
-            icon: Icon(_currentIndex == 0 ? Icons.home : Icons.home_outlined),
-            label: 'Trang chủ',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.search, size: 26),
-            label: 'Cửa hàng',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(_currentIndex == 2 ? Icons.favorite : Icons.favorite_border),
-            label: 'Yêu thích',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(_currentIndex == 3 ? Icons.person : Icons.person_outline),
-            label: 'Bạn',
-          ),
-          if (isSeller)
+      bottomNavigationBar: SafeArea(
+        child: BottomNavigationBar(
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: etsyBackground,
+          currentIndex: _currentIndex,
+          selectedItemColor: Colors.white,
+          unselectedItemColor: Colors.grey.shade600,
+          showUnselectedLabels: true,
+          selectedFontSize: 11,
+          unselectedFontSize: 11,
+          onTap: (index) => setState(() => _currentIndex = index),
+          items: [
             BottomNavigationBarItem(
-              icon: Icon(_currentIndex == 4 ? Icons.chat : Icons.chat_bubble_outline),
-              label: 'Liên hệ',
-            )
-          else
-            BottomNavigationBarItem(
-              icon: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  const Icon(Icons.shopping_cart_outlined),
-                  if (cartCount > 0)
-                    Positioned(
-                      right: -5, top: -5,
-                      child: Container(
-                        padding: const EdgeInsets.all(2),
-                        decoration: const BoxDecoration(color: Colors.deepOrange, shape: BoxShape.circle),
-                        constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
-                        child: Text('$cartCount', style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
-                      ),
-                    )
-                ],
-              ),
-              label: 'Giỏ hàng',
+              icon: Icon(_currentIndex == 0 ? Icons.home : Icons.home_outlined),
+              label: 'Trang chủ',
             ),
-        ],
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.search, size: 26),
+              label: 'Cửa hàng',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(
+                _currentIndex == 2 ? Icons.favorite : Icons.favorite_border,
+              ),
+              label: 'Yêu thích',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(
+                _currentIndex == 3 ? Icons.person : Icons.person_outline,
+              ),
+              label: 'Bạn',
+            ),
+            if (isSeller)
+              BottomNavigationBarItem(
+                icon: Icon(
+                  _currentIndex == 4 ? Icons.chat : Icons.chat_bubble_outline,
+                ),
+                label: 'Liên hệ',
+              )
+            else
+              BottomNavigationBarItem(
+                icon: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    const Icon(Icons.shopping_cart_outlined),
+                    if (cartCount > 0)
+                      Positioned(
+                        right: -5,
+                        top: -5,
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: const BoxDecoration(
+                            color: Colors.deepOrange,
+                            shape: BoxShape.circle,
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 14,
+                            minHeight: 14,
+                          ),
+                          child: Text(
+                            '$cartCount',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                label: 'Giỏ hàng',
+              ),
+          ],
+        ),
       ),
     );
   }

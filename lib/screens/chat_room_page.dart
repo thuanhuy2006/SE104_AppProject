@@ -123,7 +123,14 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
             ),
           ),
           Container(
-            padding: const EdgeInsets.all(8.0),
+            padding: EdgeInsets.fromLTRB(
+              8.0,
+              8.0,
+              8.0,
+              MediaQuery.of(context).padding.bottom > 0
+                  ? MediaQuery.of(context).padding.bottom + 8.0
+                  : 8.0,
+            ),
             color: etsyCardColor,
             child: Row(
               children: [
