@@ -16,6 +16,7 @@ class _RegisterPageState extends State<RegisterPage> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _isSeller = false;
 
   Future<void> _register() async {
     if (_nameController.text.isEmpty || _emailController.text.isEmpty || _passwordController.text.isEmpty) {
@@ -27,6 +28,7 @@ class _RegisterPageState extends State<RegisterPage> {
       _nameController.text,
       _emailController.text,
       _passwordController.text,
+      isSellerRole: _isSeller,
     );
     
     if (mounted) {
@@ -65,6 +67,22 @@ class _RegisterPageState extends State<RegisterPage> {
                 controller: _passwordController,
                 decoration: const InputDecoration(labelText: 'Mật khẩu', border: OutlineInputBorder()),
                 obscureText: true,
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Đăng ký làm Người bán hàng?', style: TextStyle(fontSize: 16)),
+                  Switch(
+                    value: _isSeller,
+                    onChanged: (val) {
+                      setState(() {
+                        _isSeller = val;
+                      });
+                    },
+                    activeColor: Colors.deepOrange,
+                  ),
+                ],
               ),
               const SizedBox(height: 30),
               SizedBox(
