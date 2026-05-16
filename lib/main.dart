@@ -34,7 +34,7 @@ class EtsyCloneApp extends StatelessWidget {
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        title: 'Etsy Clone UI',
+        title: 'Quản Lý Đơn Hàng',
         theme: ThemeData(
           brightness: Brightness.dark,
           scaffoldBackgroundColor: etsyBackground,
