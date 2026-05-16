@@ -8,11 +8,14 @@ import '../services/database.dart';
 class ChatRoomPage extends StatefulWidget {
   final String receiverId;
   final String receiverName;
+  final dynamic
+  product; // Bạn có thể thay 'dynamic' bằng tên class Model sản phẩm (VD: ProductModel)
 
   const ChatRoomPage({
     super.key,
     required this.receiverId,
     required this.receiverName,
+    this.product,
   });
 
   @override
@@ -57,13 +60,26 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
         children: [
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-              stream: _dbService.getMessages(currentUser.uid, widget.receiverId),
+              stream: _dbService.getMessages(
+                currentUser.uid,
+                widget.receiverId,
+              ),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (snapshot.hasError) {
-                  return const Center(child: Text('Đã xảy ra lỗi', style: TextStyle(color: Colors.white)));
+                  print('Lỗi ChatRoomPage: ${snapshot.error}');
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Text(
+                        'Đã xảy ra lỗi:\n${snapshot.error}',
+                        style: const TextStyle(color: Colors.redAccent),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  );
                 }
 
                 final messages = snapshot.data?.docs ?? [];
@@ -77,17 +93,27 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                     final bool isMe = data['senderId'] == currentUser.uid;
 
                     return Align(
-                      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                      alignment: isMe
+                          ? Alignment.centerRight
+                          : Alignment.centerLeft,
                       child: Container(
                         margin: const EdgeInsets.only(bottom: 10),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
                         decoration: BoxDecoration(
-                          color: isMe ? Colors.deepOrange : Colors.grey.shade800,
+                          color: isMe
+                              ? Colors.deepOrange
+                              : Colors.grey.shade800,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
                           data['text'] ?? '',
-                          style: const TextStyle(color: Colors.white, fontSize: 16),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                          ),
                         ),
                       ),
                     );
@@ -97,7 +123,14 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
             ),
           ),
           Container(
-            padding: const EdgeInsets.all(8.0),
+            padding: EdgeInsets.fromLTRB(
+              8.0,
+              8.0,
+              8.0,
+              MediaQuery.of(context).padding.bottom > 0
+                  ? MediaQuery.of(context).padding.bottom + 8.0
+                  : 8.0,
+            ),
             color: etsyCardColor,
             child: Row(
               children: [
@@ -114,7 +147,10 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                         borderRadius: BorderRadius.circular(30),
                         borderSide: BorderSide.none,
                       ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 10,
+                      ),
                     ),
                   ),
                 ),

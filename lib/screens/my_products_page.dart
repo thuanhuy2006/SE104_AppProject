@@ -12,7 +12,11 @@ class MyProductsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final productProvider = Provider.of<ProductProvider>(context);
-    final myProducts = productProvider.myProducts;
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final currentUser = userProvider.currentUser;
+    final myProducts = currentUser != null 
+        ? productProvider.getProductsBySeller(currentUser.uid)
+        : [];
     final formatCurrency = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ', decimalDigits: 0);
 
     return Scaffold(

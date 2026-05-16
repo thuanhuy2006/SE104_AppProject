@@ -18,7 +18,12 @@ class ChatListPage extends StatelessWidget {
     if (currentUser == null) {
       return const Scaffold(
         backgroundColor: etsyBackground,
-        body: Center(child: Text('Vui lòng đăng nhập', style: TextStyle(color: Colors.white))),
+        body: Center(
+          child: Text(
+            'Vui lòng đăng nhập',
+            style: TextStyle(color: Colors.white),
+          ),
+        ),
       );
     }
 
@@ -37,14 +42,27 @@ class ChatListPage extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return const Center(child: Text('Đã xảy ra lỗi', style: TextStyle(color: Colors.white)));
+            print('Lỗi ChatListPage: ${snapshot.error}');
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  'Đã xảy ra lỗi:\n${snapshot.error}',
+                  style: const TextStyle(color: Colors.redAccent),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            );
           }
 
           final chatRooms = snapshot.data?.docs ?? [];
 
           if (chatRooms.isEmpty) {
             return const Center(
-              child: Text('Chưa có tin nhắn nào', style: TextStyle(color: Colors.white70)),
+              child: Text(
+                'Chưa có tin nhắn nào',
+                style: TextStyle(color: Colors.white70),
+              ),
             );
           }
 
@@ -52,20 +70,31 @@ class ChatListPage extends StatelessWidget {
             itemCount: chatRooms.length,
             itemBuilder: (context, index) {
               final data = chatRooms[index].data() as Map<String, dynamic>;
-              final participants = List<String>.from(data['participants'] ?? []);
+              final participants = List<String>.from(
+                data['participants'] ?? [],
+              );
               participants.remove(currentUser.uid); // Lấy ID người chat cùng
-              final otherUserId = participants.isNotEmpty ? participants.first : 'Khách';
+              final otherUserId = participants.isNotEmpty
+                  ? participants.first
+                  : 'Khách';
 
               return FutureBuilder<UserModel?>(
                 future: dbService.getUser(otherUserId),
                 builder: (context, userSnapshot) {
-                  final otherUserName = userSnapshot.data?.name ?? 'Người dùng ($otherUserId)';
+                  final otherUserName =
+                      userSnapshot.data?.name ?? 'Người dùng ($otherUserId)';
                   return ListTile(
                     leading: const CircleAvatar(
                       backgroundColor: Colors.grey,
                       child: Icon(Icons.person, color: Colors.white),
                     ),
-                    title: Text(otherUserName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    title: Text(
+                      otherUserName,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     subtitle: Text(
                       data['lastMessage'] ?? '',
                       style: const TextStyle(color: Colors.white70),
