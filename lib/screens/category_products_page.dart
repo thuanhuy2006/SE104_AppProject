@@ -11,12 +11,9 @@ class CategoryProductsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final productProvider = Provider.of<ProductProvider>(context);
-    
-    // Lọc sản phẩm theo danh mục được chọn
     final filteredProducts = productProvider.products
         .where((p) => p.category == categoryName)
         .toList();
-
     return Scaffold(
       backgroundColor: etsyBackground,
       appBar: AppBar(

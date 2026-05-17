@@ -24,7 +24,7 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
-    final success = await Provider.of<UserProvider>(context, listen: false).register(
+    final error = await Provider.of<UserProvider>(context, listen: false).register(
       _nameController.text,
       _emailController.text,
       _passwordController.text,
@@ -32,10 +32,10 @@ class _RegisterPageState extends State<RegisterPage> {
     );
     
     if (mounted) {
-      if (success) {
+      if (error == null) {
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const PersonalInfoPage()));
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Đăng ký thất bại. Email có thể đã được sử dụng.')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
       }
     }
   }
