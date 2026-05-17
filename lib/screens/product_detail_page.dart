@@ -279,6 +279,8 @@ class ProductDetailPage extends StatelessWidget {
                               product.title,
                               product.price,
                               product.imageUrl,
+                              product.sellerId,
+                              product.sellerName,
                             );
                             Provider.of<UserProvider>(
                               context,
@@ -320,6 +322,8 @@ class ProductDetailPage extends StatelessWidget {
                               product.title,
                               product.price,
                               product.imageUrl,
+                              product.sellerId,
+                              product.sellerName,
                             );
                             Provider.of<UserProvider>(
                               context,

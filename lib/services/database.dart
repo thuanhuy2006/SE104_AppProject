@@ -108,10 +108,13 @@ class BuyerModel extends UserModel {
 
 /// Lớp đại diện cho người bán hàng (Seller)
 class SellerModel extends UserModel {
-  final double revenue; // Doanh thu
-  final List<String> salesHistory; // Lịch sử bán hàng (các ID đơn hàng đã bán)
-  final List<Map<String, dynamic>>
-  itemsSelling; // Thông tin các món hàng đang bán
+  final double revenue;
+  final List<String> salesHistory;
+  final List<Map<String, dynamic>> itemsSelling;
+
+  final String bankName;
+  final String bankAccount;
+  final String accountName;
 
   SellerModel({
     required String uid,
@@ -124,6 +127,9 @@ class SellerModel extends UserModel {
     required this.revenue,
     required this.salesHistory,
     required this.itemsSelling,
+    this.bankName = '',
+    this.bankAccount = '',
+    this.accountName = '',
   }) : super(
          uid: uid,
          email: email,
@@ -141,6 +147,9 @@ class SellerModel extends UserModel {
     map['revenue'] = revenue;
     map['salesHistory'] = salesHistory;
     map['itemsSelling'] = itemsSelling;
+    map['bankName'] = bankName;
+    map['bankAccount'] = bankAccount;
+    map['accountName'] = accountName;
     return map;
   }
 
@@ -156,6 +165,9 @@ class SellerModel extends UserModel {
       revenue: (map['revenue'] ?? 0).toDouble(),
       salesHistory: List<String>.from(map['salesHistory'] ?? []),
       itemsSelling: List<Map<String, dynamic>>.from(map['itemsSelling'] ?? []),
+      bankName: map['bankName'] ?? '',
+      bankAccount: map['bankAccount'] ?? '',
+      accountName: map['accountName'] ?? '',
     );
   }
 }
@@ -242,6 +254,52 @@ class DatabaseService {
       'itemsSelling': FieldValue.arrayUnion([newItem]),
     });
   }
+
+  Future<void> updateSellerBankInfo({
+      required String uid,
+      required String bankName,
+      required String bankAccount,
+      required String accountName,
+    }) async {
+      await _db.collection('users').doc(uid).update({
+        'role': 'seller', // Đảm bảo role được chuyển thành seller
+        'bankName': bankName,
+        'bankAccount': bankAccount,
+        'accountName': accountName,
+      });
+    }
+
+    /// Lấy thông tin ngân hàng của Seller bằng sellerId phục vụ lúc hiển thị QR cho Buyer quét
+    Future<Map<String, String>> getSellerBankInfo(String sellerId) async {
+      try {
+        DocumentSnapshot doc = await _db.collection('users').doc(sellerId).get();
+        if (doc.exists) {
+          Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+          // Chỉ lấy thông tin bank nếu đúng là tài khoản seller
+          if (data['role'] == 'seller') {
+            return {
+              'bankName': data['bankName'] ?? '',
+              'bankAccount': data['bankAccount'] ?? '',
+              'accountName': data['accountName'] ?? '',
+            };
+          }
+        }
+        return {'bankName': '', 'bankAccount': '', 'accountName': ''};
+      } catch (e) {
+        print('Lỗi khi lấy thông tin bank người bán: $e');
+        return {'bankName': '', 'bankAccount': '', 'accountName': ''};
+      }
+    }
+
+    /// Hàm nâng cấp tài khoản từ Buyer lên Seller (Không làm mất giỏ hàng hay lịch sử mua cũ)
+    Future<void> upgradeToSeller(String uid) async {
+      await _db.collection('users').doc(uid).update({
+        'role': 'seller',
+        'revenue': 0.0,
+        'salesHistory': [],
+        'itemsSelling': [],
+      });
+    }
 
   // CÁC HÀM TIỆN ÍCH DÀNH CHO CHAT (NHẮN TIN)
 

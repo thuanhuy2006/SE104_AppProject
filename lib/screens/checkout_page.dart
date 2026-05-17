@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../providers/app_providers.dart';
 import '../constants/app_colors.dart';
+import 'payment_qr_page.dart';
 
 class CheckoutPage extends StatefulWidget {
   const CheckoutPage({super.key});
@@ -285,14 +286,26 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                   ],
                                 ),
                               ),
-                              Text(
-                                formatCurrency.format(
-                                  item.price * item.quantity,
-                                ),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    formatCurrency.format(
+                                      item.price * item.quantity,
+                                    ),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  Text(
+                                    "Bán bởi: ${item.sellerName}",
+                                    style: const TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
@@ -359,19 +372,71 @@ class _CheckoutPageState extends State<CheckoutPage> {
               child: ElevatedButton(
                 onPressed: () async {
                   if (selectedItems.isEmpty) return;
-                  await userProvider.addOrder(selectedItems, finalTotal);
-                  cart.clearSelectedCart();
-                  // Cập nhật lại những món hàng còn dư trong giỏ lên Firebase
-                  await userProvider.syncCartToFirebase(
-                    cart.items.values.toList(),
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (context) => const Center(
+                        child: CircularProgressIndicator(
+                            color: Colors.deepOrange)),
                   );
-                  Navigator.popUntil(context, (route) => route.isFirst);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("🎉 Đặt hàng thành công!"),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
+                  try {
+                    // 2. Tạo đơn hàng trên Hệ thống
+                    final orderId =
+                        await userProvider.addOrder(selectedItems, finalTotal);
+
+                    // Đóng dialog loading
+                    if (mounted) Navigator.pop(context);
+
+                    // 4. KIỂM TRA PHƯƠNG THỨC THANH TOÁN
+                    if (_paymentMethod == "Chuyển khoản ngân hàng") {
+                      if (mounted) {
+                        // Tạo tóm tắt sản phẩm (VD: Ao polo, Giay nam...)
+                        String summary = selectedItems
+                            .map((item) => item.title)
+                            .join(", ");
+                        if (summary.length > 30) {
+                          summary = "${summary.substring(0, 27)}...";
+                        }
+
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => PaymentQRPage(
+                              orderId: orderId,
+                              totalAmount: finalTotal,
+                              purchaserName: displayName,
+                              productSummary: summary,
+                            ),
+                          ),
+                        );
+                      }
+                    } else {
+                      // Luồng đối với COD: Xóa giỏ hàng và về trang chủ
+                      cart.clearSelectedCart();
+                      await userProvider
+                          .syncCartToFirebase(cart.items.values.toList());
+
+                      if (mounted) {
+                        Navigator.popUntil(context, (route) => route.isFirst);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                                "🎉 Đặt hàng thành công ($_paymentMethod)!"),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      }
+                    }
+                  } catch (error) {
+                    if (mounted) {
+                      Navigator.pop(context); // Đóng loading nếu lỗi
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                            content: Text("Có lỗi xảy ra: $error"),
+                            backgroundColor: Colors.red),
+                      );
+                    }
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
@@ -468,42 +533,44 @@ class _CheckoutPageState extends State<CheckoutPage> {
     final methods = [
       "Thanh toán khi nhận hàng (COD)",
       "Chuyển khoản ngân hàng",
-      "Ví MoMo",
-      "ZaloPay",
-      "Thẻ tín dụng / Ghi nợ",
     ];
     showModalBottomSheet(
       context: context,
       backgroundColor: etsyCardColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (ctx) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                "Phương thức thanh toán",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 10),
-              ...methods.map(
-                (method) => ListTile(
-                  title: Text(
-                    method,
-                    style: const TextStyle(color: Colors.white),
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  "Phương thức thanh toán",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
                   ),
-                  leading: const Icon(Icons.payment, color: Colors.white70),
-                  onTap: () {
-                    setState(() => _paymentMethod = method);
-                    Navigator.pop(ctx);
-                  },
                 ),
-              ),
-            ],
+                const SizedBox(height: 10),
+                ...methods.map(
+                  (method) => ListTile(
+                    title: Text(
+                      method,
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                    leading: const Icon(Icons.payment, color: Colors.white70),
+                    onTap: () {
+                      setState(() => _paymentMethod = method);
+                      Navigator.pop(ctx);
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -514,94 +581,99 @@ class _CheckoutPageState extends State<CheckoutPage> {
     showModalBottomSheet(
       context: context,
       backgroundColor: etsyCardColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (ctx) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                "Chọn mã giảm giá",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  "Chọn mã giảm giá",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 10),
-              ListTile(
-                title: const Text(
-                  "Giảm 10% (Tối đa 50k)",
-                  style: TextStyle(color: Colors.white),
+                const SizedBox(height: 10),
+                ListTile(
+                  title: const Text(
+                    "Giảm 10% (Tối đa 50k)",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  subtitle: const Text("Áp dụng cho mọi đơn hàng"),
+                  trailing: ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _discountCode = "GIAM10";
+                        double discount = totalAmount * 0.1;
+                        _discountAmount = discount > 50000 ? 50000 : discount;
+                      });
+                      Navigator.pop(ctx);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepOrange,
+                    ),
+                    child: const Text(
+                      "Áp dụng",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
                 ),
-                subtitle: const Text("Áp dụng cho mọi đơn hàng"),
-                trailing: ElevatedButton(
-                  onPressed: () {
+                ListTile(
+                  title: const Text(
+                    "Giảm 30.000đ",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  subtitle: const Text("Cho đơn hàng từ 150k"),
+                  trailing: ElevatedButton(
+                    onPressed: () {
+                      if (totalAmount >= 150000) {
+                        setState(() {
+                          _discountCode = "GIAM30K";
+                          _discountAmount = 30000;
+                        });
+                        Navigator.pop(ctx);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Đơn hàng chưa đủ điều kiện!"),
+                          ),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepOrange,
+                    ),
+                    child: const Text(
+                      "Áp dụng",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ),
+                ListTile(
+                  title: const Text(
+                    "Xóa mã giảm giá",
+                    style: TextStyle(color: Colors.redAccent),
+                  ),
+                  leading: const Icon(
+                    Icons.remove_circle_outline,
+                    color: Colors.redAccent,
+                  ),
+                  onTap: () {
                     setState(() {
-                      _discountCode = "GIAM10";
-                      double discount = totalAmount * 0.1;
-                      _discountAmount = discount > 50000 ? 50000 : discount;
+                      _discountCode = null;
+                      _discountAmount = 0.0;
                     });
                     Navigator.pop(ctx);
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepOrange,
-                  ),
-                  child: const Text(
-                    "Áp dụng",
-                    style: TextStyle(color: Colors.white),
-                  ),
                 ),
-              ),
-              ListTile(
-                title: const Text(
-                  "Giảm 30.000đ",
-                  style: TextStyle(color: Colors.white),
-                ),
-                subtitle: const Text("Cho đơn hàng từ 150k"),
-                trailing: ElevatedButton(
-                  onPressed: () {
-                    if (totalAmount >= 150000) {
-                      setState(() {
-                        _discountCode = "GIAM30K";
-                        _discountAmount = 30000;
-                      });
-                      Navigator.pop(ctx);
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Đơn hàng chưa đủ điều kiện!"),
-                        ),
-                      );
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepOrange,
-                  ),
-                  child: const Text(
-                    "Áp dụng",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              ),
-              ListTile(
-                title: const Text(
-                  "Xóa mã giảm giá",
-                  style: TextStyle(color: Colors.redAccent),
-                ),
-                leading: const Icon(
-                  Icons.remove_circle_outline,
-                  color: Colors.redAccent,
-                ),
-                onTap: () {
-                  setState(() {
-                    _discountCode = null;
-                    _discountAmount = 0.0;
-                  });
-                  Navigator.pop(ctx);
-                },
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },

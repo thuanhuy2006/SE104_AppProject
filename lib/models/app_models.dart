@@ -7,6 +7,7 @@ class Product {
   final String category;
   final String description;
   final String sellerId;
+  final String sellerName;
   final int stockQuantity;
   final List<String> vouchers;
   final double revenue;
@@ -20,6 +21,7 @@ class Product {
     required this.category,
     required this.description,
     required this.sellerId,
+    this.sellerName = 'Etsy Store',
     this.stockQuantity = 1,
     this.vouchers = const [],
     this.revenue = 0.0,
@@ -35,6 +37,7 @@ class Product {
       'category': category,
       'description': description,
       'sellerId': sellerId,
+      'sellerName': sellerName,
       'stockQuantity': stockQuantity,
       'vouchers': vouchers,
       'revenue': revenue,
@@ -51,6 +54,7 @@ class Product {
       category: map['category'] ?? '',
       description: map['description'] ?? '',
       sellerId: map['sellerId'] ?? 'admin',
+      sellerName: map['sellerName'] ?? (map['sellerId'] == 'admin' ? 'Etsy Store' : 'Người bán'),
       stockQuantity: map['stockQuantity']?.toInt() ?? 1,
       vouchers: List<String>.from(map['vouchers'] ?? []),
       revenue: (map['revenue'] ?? 0).toDouble(),
@@ -63,6 +67,8 @@ class CartItem {
   final String title;
   final int price;
   final String imageUrl;
+  final String sellerId;
+  final String sellerName;
   int quantity;
   bool isSelected;
 
@@ -71,6 +77,8 @@ class CartItem {
     required this.title,
     required this.price,
     required this.imageUrl,
+    this.sellerId = 'admin',
+    this.sellerName = 'Etsy Store',
     this.quantity = 1,
     this.isSelected = true,
   });

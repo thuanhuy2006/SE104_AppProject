@@ -31,7 +31,6 @@ class CartItem {
 }
 
 class ProductData {
-  // Dữ liệu mock giống y hệt hình ảnh Etsy
   static final List<Product> products = [
     Product(
       id: 'p1',

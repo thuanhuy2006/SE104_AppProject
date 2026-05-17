@@ -78,6 +78,9 @@ class UserProvider with ChangeNotifier {
           revenue: seller.revenue,
           salesHistory: seller.salesHistory,
           itemsSelling: seller.itemsSelling,
+          bankName: seller.bankName,
+          bankAccount: seller.bankAccount,
+          accountName: seller.accountName,
         );
         await DatabaseService().saveSeller(updatedUser as SellerModel);
       } else {
@@ -97,7 +100,64 @@ class UserProvider with ChangeNotifier {
     }
   }
 
-  Future<void> addOrder(List<CartItem> items, double total) async {
+  /// Cập nhật thông tin ngân hàng cho Seller
+  Future<void> updateSellerBankInfo({
+    required String bankName,
+    required String bankAccount,
+    required String accountName,
+  }) async {
+    if (_currentUser != null) {
+      // Cập nhật lên Firestore
+      await DatabaseService().updateSellerBankInfo(
+        uid: _currentUser!.uid,
+        bankName: bankName,
+        bankAccount: bankAccount,
+        accountName: accountName,
+      );
+
+      // Cập nhật local state
+      if (_currentUser is SellerModel) {
+        final seller = _currentUser as SellerModel;
+        _currentUser = SellerModel(
+          uid: seller.uid,
+          email: seller.email,
+          name: seller.name,
+          password: seller.password,
+          address: seller.address,
+          phoneNumber: seller.phoneNumber,
+          bio: seller.bio,
+          revenue: seller.revenue,
+          salesHistory: seller.salesHistory,
+          itemsSelling: seller.itemsSelling,
+          bankName: bankName,
+          bankAccount: bankAccount,
+          accountName: accountName,
+        );
+      } else {
+        // Nếu user hiện tại đang là Buyer nhưng vừa cấu hình bank (có thể do logic chuyển đổi)
+        // Ta chuyển đổi local user sang SellerModel
+        _currentUser = SellerModel(
+          uid: _currentUser!.uid,
+          email: _currentUser!.email,
+          name: _currentUser!.name,
+          password: _currentUser!.password,
+          address: _currentUser!.address,
+          phoneNumber: _currentUser!.phoneNumber,
+          bio: _currentUser!.bio,
+          revenue: 0.0,
+          salesHistory: [],
+          itemsSelling: [],
+          bankName: bankName,
+          bankAccount: bankAccount,
+          accountName: accountName,
+        );
+        _role = UserRole.seller;
+      }
+      notifyListeners();
+    }
+  }
+
+  Future<String> addOrder(List<CartItem> items, double total) async {
     String orderId = 'ORD${DateTime.now().millisecondsSinceEpoch}';
     _myOrders.insert(0, {
       'id': orderId,
@@ -112,6 +172,7 @@ class UserProvider with ChangeNotifier {
       await DatabaseService().addPurchaseHistory(_currentUser!.uid, orderId);
     }
     notifyListeners();
+    return orderId;
   }
 
   // Hàm tiện ích để đồng bộ giỏ hàng lên Firebase
@@ -124,6 +185,8 @@ class UserProvider with ChangeNotifier {
               'title': item.title,
               'price': item.price,
               'imageUrl': item.imageUrl,
+              'sellerId': item.sellerId,
+              'sellerName': item.sellerName,
               'quantity': item.quantity,
             },
           )
@@ -324,7 +387,7 @@ class CartProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void addItem(String id, String title, int price, String imageUrl) {
+  void addItem(String id, String title, int price, String imageUrl, String sellerId, String sellerName) {
     if (_items.containsKey(id)) {
       _items.update(
         id,
@@ -333,6 +396,8 @@ class CartProvider with ChangeNotifier {
           title: ex.title,
           price: ex.price,
           imageUrl: ex.imageUrl,
+          sellerId: ex.sellerId,
+          sellerName: ex.sellerName,
           quantity: ex.quantity + 1,
           isSelected: ex.isSelected,
         ),
@@ -340,7 +405,14 @@ class CartProvider with ChangeNotifier {
     } else {
       _items.putIfAbsent(
         id,
-        () => CartItem(id: id, title: title, price: price, imageUrl: imageUrl),
+        () => CartItem(
+          id: id,
+          title: title,
+          price: price,
+          imageUrl: imageUrl,
+          sellerId: sellerId,
+          sellerName: sellerName,
+        ),
       );
     }
     notifyListeners();

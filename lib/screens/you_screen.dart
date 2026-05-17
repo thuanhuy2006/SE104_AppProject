@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_providers.dart';
 import '../constants/app_colors.dart';
+import '../models/app_models.dart';
+import '../services/database.dart';
 import 'profile_screen.dart';
 import 'login_page.dart';
 import 'purchases_screen.dart';
@@ -48,17 +50,25 @@ class YouScreen extends StatelessWidget {
               subtitle: Text(userProvider.currentUser!.email, style: const TextStyle(color: Colors.grey)),
             ),
             _buildDivider(),
-            
+
             _buildMenuItem("Hồ sơ", context, () {
               Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
             }),
             _buildDivider(),
-            
+
+            // --- TÍCH HỢP SEPAY ĐOẠN NÀY: Xuất hiện khi user là Người Bán ---
+            if (userProvider.isSeller) ...[
+              _buildMenuItem("Tài khoản ngân hàng", context, () {
+                _showSePayConfigDialog(context, userProvider);
+              }),
+              _buildDivider(),
+            ],
+
             _buildMenuItem("Đơn mua", context, () {
               Navigator.push(context, MaterialPageRoute(builder: (_) => const PurchasesScreen()));
             }),
             _buildDivider(),
-            
+
             _buildMenuItem("Tin nhắn", context, () {
               Navigator.push(context, MaterialPageRoute(builder: (_) => const ChatListPage()));
             }),
@@ -112,6 +122,115 @@ class YouScreen extends StatelessWidget {
               ),
             ),
           ]
+        ],
+      ),
+    );
+  }
+
+  /// Hàm hiển thị Dialog cấu hình thông tin ngân hàng nhận tiền qua SePay
+  void _showSePayConfigDialog(BuildContext context, UserProvider userProvider) {
+    // Ép kiểu an toàn sang SellerModel để lấy dữ liệu bank cũ (nếu có) đổ vào Form
+    final currentSeller = userProvider.currentUser is SellerModel
+        ? (userProvider.currentUser as SellerModel)
+        : null;
+
+    final bankNameCtrl = TextEditingController(text: currentSeller?.bankName ?? "");
+    final bankAccCtrl = TextEditingController(text: currentSeller?.bankAccount ?? "");
+    final bankOwnerCtrl = TextEditingController(text: currentSeller?.accountName ?? "");
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: etsyCardColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        title: const Text(
+          "Cấu hình ví SePay nhận tiền",
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                "Hệ thống sẽ dùng thông tin ngân hàng này để tự sinh QR quét mã thanh toán tự động khi khách mua hàng của bạn.",
+                style: TextStyle(color: Colors.grey, fontSize: 13, height: 1.3),
+              ),
+              const SizedBox(height: 15),
+              TextField(
+                controller: bankNameCtrl,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  labelText: "Tên ngân hàng viết tắt (VD: MBBank, VCB)",
+                  labelStyle: TextStyle(color: Colors.grey, fontSize: 13),
+                  focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.deepOrange)),
+                  enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: bankAccCtrl,
+                style: const TextStyle(color: Colors.white),
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: "Số tài khoản ngân hàng",
+                  labelStyle: TextStyle(color: Colors.grey, fontSize: 13),
+                  focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.deepOrange)),
+                  enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: bankOwnerCtrl,
+                style: const TextStyle(color: Colors.white),
+                textCapitalization: TextCapitalization.characters, // Tự động viết hoa chữ cái
+                decoration: const InputDecoration(
+                  labelText: "Tên chủ tài khoản (VIET HOA KHONG DAU)",
+                  labelStyle: TextStyle(color: Colors.grey, fontSize: 13),
+                  focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.deepOrange)),
+                  enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("Hủy", style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (bankNameCtrl.text.isEmpty || bankAccCtrl.text.isEmpty || bankOwnerCtrl.text.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Vui lòng nhập đủ thông tin!"), backgroundColor: Colors.redAccent),
+                );
+                return;
+              }
+
+              try {
+                // Gọi hàm xử lý cập nhật dữ liệu của UserProvider
+                await userProvider.updateSellerBankInfo(
+                  bankName: bankNameCtrl.text.trim(),
+                  bankAccount: bankAccCtrl.text.trim(),
+                  accountName: bankOwnerCtrl.text.trim().toUpperCase(),
+                );
+
+                if (context.mounted) {
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("🎉 Đã cập nhật tài khoản nhận tiền thành công!"), backgroundColor: Colors.green),
+                  );
+                }
+              } catch (e) {
+                print("Lỗi khi lưu thông tin ngân hàng SePay: $e");
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.deepOrange,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text("Lưu lại", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
         ],
       ),
     );

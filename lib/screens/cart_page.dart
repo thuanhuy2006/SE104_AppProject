@@ -180,6 +180,8 @@ class EtsyCartPage extends StatelessWidget {
                                               cartItem.title,
                                               cartItem.price,
                                               cartItem.imageUrl,
+                                              cartItem.sellerId,
+                                              cartItem.sellerName,
                                             );
                                             userProvider.syncCartToFirebase(
                                               cart.items.values.toList(),
