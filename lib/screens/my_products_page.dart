@@ -25,10 +25,7 @@ class MyProductsPage extends StatelessWidget {
         backgroundColor: etsyBackground,
         elevation: 0,
         title: const Text("Sản phẩm của tôi", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
+        automaticallyImplyLeading: false, // Hide back button
       ),
       body: myProducts.isEmpty
           ? _buildEmptyState(context)
@@ -76,6 +73,13 @@ class MyProductsPage extends StatelessWidget {
                         ),
                       ),
                       IconButton(
+                        icon: const Icon(Icons.edit_outlined, color: Colors.blueAccent),
+                        onPressed: () {
+                          // Navigate to edit product page
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => AddProductPage(productToEdit: product)));
+                        },
+                      ),
+                      IconButton(
                         icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
                         onPressed: () {
                           _showDeleteConfirm(context, productProvider, product.id);
@@ -101,7 +105,7 @@ class MyProductsPage extends StatelessWidget {
         children: [
           Icon(Icons.inventory_2_outlined, size: 80, color: Colors.grey.shade700),
           const SizedBox(height: 20),
-          const Text("Bạn chưa đăng sản phẩm nào", 
+          const Text("Bạn chưa bán bất kì món hàng nào", 
             style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
           const Padding(

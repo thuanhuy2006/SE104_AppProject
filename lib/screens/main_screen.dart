@@ -9,6 +9,7 @@ import 'favorite_page.dart';
 import 'cart_page.dart';
 import 'you_screen.dart';
 import 'chat_list_page.dart';
+import 'my_products_page.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -28,7 +29,7 @@ class _MainScreenState extends State<MainScreen> {
     final List<Widget> pages = [
       const EtsyHomePage(),
       const EtsyShopPage(),
-      const FavoritePage(),
+      isSeller ? const MyProductsPage() : const FavoritePage(),
       const YouScreen(),
       isSeller ? const ChatListPage() : const EtsyCartPage(),
     ];
@@ -57,9 +58,11 @@ class _MainScreenState extends State<MainScreen> {
             ),
             BottomNavigationBarItem(
               icon: Icon(
-                _currentIndex == 2 ? Icons.favorite : Icons.favorite_border,
+                isSeller 
+                  ? (_currentIndex == 2 ? Icons.inventory_2 : Icons.inventory_2_outlined) 
+                  : (_currentIndex == 2 ? Icons.favorite : Icons.favorite_border),
               ),
-              label: 'Yêu thích',
+              label: isSeller ? 'Hàng hóa' : 'Yêu thích',
             ),
             BottomNavigationBarItem(
               icon: Icon(

@@ -214,12 +214,31 @@ class UserProvider with ChangeNotifier {
           notifyListeners();
           return true;
         } else {
-          // Bắt trường hợp có tài khoản Auth nhưng mất/không có dữ liệu ở Firestore
-          await firebase_auth.FirebaseAuth.instance.signOut();
-          print(
-            'Login error: Không tìm thấy dữ liệu người dùng trên Firestore.',
+          // Bắt trường hợp có tài khoản Auth nhưng mất/không có dữ liệu ở Firestore do Rules hoặc lỗi mạng
+          BuyerModel newUser = BuyerModel(
+            uid: cred.user!.uid,
+            email: email,
+            name: email.split('@')[0],
+            password: password,
+            address: '',
+            phoneNumber: '',
+            bio: '',
+            purchaseHistory: [],
+            currentCart: [],
+            discountCodes: [],
           );
-          return false;
+          try {
+            await DatabaseService().saveBuyer(newUser);
+            _currentUser = newUser;
+            _isLoggedIn = true;
+            _role = UserRole.buyer;
+            notifyListeners();
+            return true;
+          } catch (e) {
+            print('Login error: Không thể tạo lại dữ liệu trên Firestore: $e');
+            await firebase_auth.FirebaseAuth.instance.signOut();
+            return false;
+          }
         }
       }
       return false;
@@ -321,7 +340,11 @@ class ProductProvider with ChangeNotifier {
       // Initialize with mock data if empty
       _products = [...ProductData.products];
       for (var product in _products) {
-        await DatabaseService().saveProduct(product);
+        try {
+          await DatabaseService().saveProduct(product);
+        } catch (e) {
+          print('Lỗi khi lưu sản phẩm mẫu: $e');
+        }
       }
     }
     
@@ -337,6 +360,15 @@ class ProductProvider with ChangeNotifier {
     await DatabaseService().saveProduct(product);
     _products.insert(0, product);
     notifyListeners();
+  }
+
+  Future<void> updateProduct(Product product) async {
+    await DatabaseService().saveProduct(product);
+    final index = _products.indexWhere((p) => p.id == product.id);
+    if (index != -1) {
+      _products[index] = product;
+      notifyListeners();
+    }
   }
 
   void deleteProduct(String id) {
