@@ -1,103 +1,219 @@
 import 'package:flutter/material.dart';
-import 'app_models.dart';
-import 'shared_widgets.dart';
+import 'package:provider/provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
-class EtsyHomePage extends StatelessWidget {
+import '../models/app_models.dart';
+import '../providers/app_providers.dart';
+import '../widgets/shared_widgets.dart';
+import '../constants/app_colors.dart';
+// BỊ THIẾU DÒNG IMPORT FILE ADD_PRODUCT_PAGE Ở ĐÂY
+import '../screens/add_product_page.dart';
+
+class EtsyHomePage extends StatefulWidget {
   const EtsyHomePage({super.key});
 
   @override
+  State<EtsyHomePage> createState() => _EtsyHomePageState();
+}
+
+class _EtsyHomePageState extends State<EtsyHomePage> {
+  final ScrollController _scrollController = ScrollController();
+  int _currentLimit = 4; // Số lượng hiển thị ban đầu
+  bool _isLoadingMore = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Lắng nghe sự kiện cuộn của người dùng
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    // Nếu cuộn đến tận cùng dưới cùng của trang
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 50) {
+      _loadMoreProducts();
+    }
+  }
+
+  void _loadMoreProducts() {
+    if (_isLoadingMore) return;
+
+    setState(() {
+      _isLoadingMore = true;
+    });
+
+    // Tạo độ trễ ảo 1 giây để hiển thị vòng xoay loading đẹp mắt giống app thực tế
+    Future.delayed(const Duration(seconds: 1), () {
+      if (mounted) {
+        setState(() {
+          _currentLimit += 4; // Lấy thêm 4 món
+          _isLoadingMore = false;
+        });
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context);
+    final productProvider = Provider.of<ProductProvider>(context);
+    final searchQuery = Provider.of<SearchProvider>(context).query;
+
+    // Lọc sản phẩm theo tìm kiếm
+    final filteredProducts = productProvider.products.where((p) {
+      final title = p.title.toLowerCase();
+      final category = p.category.toLowerCase();
+      return title.contains(searchQuery) || category.contains(searchQuery);
+    }).toList();
+
+    // TÍNH NĂNG PHÂN TRANG: Chỉ lấy đúng số lượng Limit để hiển thị
+    final displayProducts = filteredProducts.take(_currentLimit).toList();
+
     return Scaffold(
+      backgroundColor: etsyBackground,
       body: Column(
         children: [
           const EtsyHeader(),
           Expanded(
             child: SingleChildScrollView(
+              controller: _scrollController, // GẮN CONTROLLER VÀO ĐÂY
               padding: const EdgeInsets.only(bottom: 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
+                  if (searchQuery.isEmpty) const GreetingBanner(),
+
+                  const SizedBox(height: 25),
+                  Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 15),
                     child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Container(
-                          width: MediaQuery.of(context).size.width * 0.85,
-                          height: 160,
-                          decoration: BoxDecoration(color: const Color(0xFFF3EAC8), borderRadius: BorderRadius.circular(12)),
-                          clipBehavior: Clip.hardEdge,
-                          child: Row(
-                            children: [
-                              Expanded(
-                                flex: 1,
-                                child: Padding(
-                                  padding: const EdgeInsets.all(15.0),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      const Text("Top 100 gifts for\nmom", style: TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.bold, height: 1.2)),
-                                      const SizedBox(height: 15),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
-                                        decoration: BoxDecoration(color: const Color(0xFF322E3B), borderRadius: BorderRadius.circular(20)),
-                                        child: const Text("Shop our picks", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
-                                      )
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                flex: 1,
-                                child: Image.network(
-                                  'https://i.etsystatic.com/26451670/r/il/64ce5f/3796677708/il_794xN.3796677708_k3eb.jpg',
-                                  fit: BoxFit.cover,
-                                  height: double.infinity,
-                                ),
-                              )
-                            ],
-                          ),
+                        Text(
+                            searchQuery.isEmpty ? "Gợi ý cho bạn" : "Kết quả tìm kiếm cho '$searchQuery'",
+                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)
                         ),
-                        const SizedBox(width: 15),
-                        Container(
-                          width: MediaQuery.of(context).size.width * 0.85,
-                          height: 160,
-                          decoration: BoxDecoration(color: const Color(0xFF3E4F32), borderRadius: BorderRadius.circular(12)),
-                          padding: const EdgeInsets.all(15),
-                          child: const Text("Creative gifts\nfor her", style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                        )
+                        if (userProvider.isSeller)
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => AddProductPage()));
+                            },
+                            icon: const Icon(Icons.add_a_photo, size: 18),
+                            label: const Text("Đăng đồ bán"),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.deepOrange,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                            ),
+                          )
                       ],
                     ),
                   ),
-                  const SizedBox(height: 25),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 15),
-                    child: Text("Inspiration at your fingertips", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-                  ),
                   const SizedBox(height: 15),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 15),
-                    child: GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: 0.72,
-                        crossAxisSpacing: 15,
-                        mainAxisSpacing: 20,
+
+                  if (filteredProducts.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.all(40.0),
+                      child: Center(
+                        child: Text("Không tìm thấy sản phẩm nào khớp với từ khóa của bạn.",
+                            textAlign: TextAlign.center, style: TextStyle(color: Colors.grey)),
                       ),
-                      itemCount: ProductData.products.length,
-                      itemBuilder: (context, index) {
-                        return EtsyProductCard(product: ProductData.products[index]);
-                      },
+                    )
+                  else
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 15),
+                      child: GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          childAspectRatio: 0.72,
+                          crossAxisSpacing: 15,
+                          mainAxisSpacing: 20,
+                        ),
+                        itemCount: displayProducts.length,
+                        itemBuilder: (context, index) {
+                          return EtsyProductCard(product: displayProducts[index]);
+                        },
+                      ),
                     ),
-                  )
+
+                  // HIỆN LOADING KHI ĐANG TẢI THÊM
+                  if (_isLoadingMore && displayProducts.length < filteredProducts.length)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 20),
+                      child: Center(
+                        child: CircularProgressIndicator(color: Colors.deepOrange),
+                      ),
+                    ),
+
+                  // HIỆN THÔNG BÁO KHI ĐÃ HẾT HÀNG
+                  if (displayProducts.length >= filteredProducts.length && filteredProducts.isNotEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 30),
+                      child: Center(
+                        child: Text("Bạn đã xem hết sản phẩm hôm nay 🚀", style: TextStyle(color: Colors.grey)),
+                      ),
+                    )
                 ],
               ),
             ),
           )
         ],
+      ),
+    );
+  }
+}
+
+class GreetingBanner extends StatelessWidget {
+  const GreetingBanner({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 15),
+      child: Container(
+        height: 140,
+        decoration: BoxDecoration(
+            color: const Color(0xFFF3EAC8),
+            borderRadius: BorderRadius.circular(12)
+        ),
+        clipBehavior: Clip.hardEdge,
+        child: Row(
+          children: [
+            const Expanded(
+              flex: 3,
+              child: Padding(
+                padding: const EdgeInsets.all(15.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text("Chào mừng bạn!", style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+                    SizedBox(height: 10),
+                    Text("Bạn muốn mua gì hay đăng bán gì hôm nay?", style: TextStyle(color: Colors.black87, fontSize: 13)),
+                  ],
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: CachedNetworkImage(
+                imageUrl: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=500&q=60',
+                fit: BoxFit.cover,
+                height: double.infinity,
+                placeholder: (context, url) => const Center(child: CircularProgressIndicator(color: Colors.deepOrange)),
+                errorWidget: (context, url, error) => const Icon(Icons.image_not_supported, color: Colors.grey),
+              ),
+            )
+          ],
+        ),
       ),
     );
   }
