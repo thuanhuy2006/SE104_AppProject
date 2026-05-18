@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cached_network_image/cached_network_image.dart'; // Đã thêm import
+
 import '../models/app_models.dart';
 import '../providers/app_providers.dart';
 import '../widgets/shared_widgets.dart';
@@ -34,8 +36,8 @@ class EtsyHomePage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Banner chào mừng (Ẩn đi khi đang tìm kiếm để nhường chỗ cho kết quả)
-                  if (searchQuery.isEmpty) const GreetingBanner(), 
-                  
+                  if (searchQuery.isEmpty) const GreetingBanner(),
+
                   const SizedBox(height: 25),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 15),
@@ -43,8 +45,8 @@ class EtsyHomePage extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          searchQuery.isEmpty ? "Gợi ý cho bạn" : "Kết quả tìm kiếm cho '$searchQuery'", 
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)
+                            searchQuery.isEmpty ? "Gợi ý cho bạn" : "Kết quả tìm kiếm cho '$searchQuery'",
+                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)
                         ),
                         if (userProvider.isSeller)
                           ElevatedButton.icon(
@@ -68,8 +70,8 @@ class EtsyHomePage extends StatelessWidget {
                     const Padding(
                       padding: EdgeInsets.all(40.0),
                       child: Center(
-                        child: Text("Không tìm thấy sản phẩm nào khớp với từ khóa của bạn.", 
-                          textAlign: TextAlign.center, style: TextStyle(color: Colors.grey)),
+                        child: Text("Không tìm thấy sản phẩm nào khớp với từ khóa của bạn.",
+                            textAlign: TextAlign.center, style: TextStyle(color: Colors.grey)),
                       ),
                     )
                   else
@@ -110,8 +112,8 @@ class GreetingBanner extends StatelessWidget {
       child: Container(
         height: 140,
         decoration: BoxDecoration(
-          color: const Color(0xFFF3EAC8), 
-          borderRadius: BorderRadius.circular(12)
+            color: const Color(0xFFF3EAC8),
+            borderRadius: BorderRadius.circular(12)
         ),
         clipBehavior: Clip.hardEdge,
         child: Row(
@@ -133,10 +135,12 @@ class GreetingBanner extends StatelessWidget {
             ),
             Expanded(
               flex: 2,
-              child: Image.network(
-                'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=500&q=60', 
-                fit: BoxFit.cover, 
-                height: double.infinity
+              child: CachedNetworkImage( // ĐÃ SỬA Ở ĐÂY
+                imageUrl: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=500&q=60',
+                fit: BoxFit.cover,
+                height: double.infinity,
+                placeholder: (context, url) => const Center(child: CircularProgressIndicator(color: Colors.deepOrange)),
+                errorWidget: (context, url, error) => const Icon(Icons.image_not_supported, color: Colors.grey),
               ),
             )
           ],

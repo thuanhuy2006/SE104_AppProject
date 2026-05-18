@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cached_network_image/cached_network_image.dart'; // Đã thêm import
+
 import '../constants/app_colors.dart';
 import '../models/app_models.dart';
 import '../providers/app_providers.dart';
@@ -30,50 +32,50 @@ class EtsyShopPage extends StatelessWidget {
         children: [
           const EtsyHeader(),
           Expanded(
-            child: searchQuery.isNotEmpty 
-              ? _buildSearchResults(filteredProducts)
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.only(bottom: 20, top: 15),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 15),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text("Mua sắm theo danh mục", 
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)
-                            ),
-                            if (userProvider.isSeller)
-                              const Text("Chế độ bán hàng", style: TextStyle(color: Colors.deepOrange, fontSize: 12, fontWeight: FontWeight.bold)),
-                          ],
+            child: searchQuery.isNotEmpty
+                ? _buildSearchResults(filteredProducts)
+                : SingleChildScrollView(
+              padding: const EdgeInsets.only(bottom: 20, top: 15),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 15),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text("Mua sắm theo danh mục",
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)
                         ),
-                      ),
-                      const SizedBox(height: 15),
-                      
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 15),
-                        child: Wrap(
-                          spacing: 10, runSpacing: 10,
-                          children: [
-                            _buildCategoryCard(context, 'Trang sức', '💍'),
-                            _buildCategoryCard(context, 'Quần áo', '🧥'),
-                            _buildCategoryCard(context, 'Phụ kiện', '👜'),
-                            _buildCategoryCard(context, 'Giày dép', '👟'),
-                          ],
-                        ),
-                      ),
-                      
-                      const SizedBox(height: 40),
-
-                      _buildDynamicSection(context, 'Trang sức', products),
-                      _buildDynamicSection(context, 'Quần áo', products),
-                      _buildDynamicSection(context, 'Phụ kiện', products),
-                      _buildDynamicSection(context, 'Giày dép', products),
-                    ],
+                        if (userProvider.isSeller)
+                          const Text("Chế độ bán hàng", style: TextStyle(color: Colors.deepOrange, fontSize: 12, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 15),
+
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 15),
+                    child: Wrap(
+                      spacing: 10, runSpacing: 10,
+                      children: [
+                        _buildCategoryCard(context, 'Trang sức', '💍'),
+                        _buildCategoryCard(context, 'Quần áo', '🧥'),
+                        _buildCategoryCard(context, 'Phụ kiện', '👜'),
+                        _buildCategoryCard(context, 'Giày dép', '👟'),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 40),
+
+                  _buildDynamicSection(context, 'Trang sức', products),
+                  _buildDynamicSection(context, 'Quần áo', products),
+                  _buildDynamicSection(context, 'Phụ kiện', products),
+                  _buildDynamicSection(context, 'Giày dép', products),
+                ],
+              ),
+            ),
           )
         ],
       ),
@@ -87,7 +89,7 @@ class EtsyShopPage extends StatelessWidget {
     return GridView.builder(
       padding: const EdgeInsets.all(15),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2, childAspectRatio: 0.72, crossAxisSpacing: 15, mainAxisSpacing: 20
+          crossAxisCount: 2, childAspectRatio: 0.72, crossAxisSpacing: 15, mainAxisSpacing: 20
       ),
       itemCount: filteredProducts.length,
       itemBuilder: (context, index) => EtsyProductCard(product: filteredProducts[index]),
@@ -101,9 +103,9 @@ class EtsyShopPage extends StatelessWidget {
         width: (MediaQuery.of(context).size.width - 40) / 2,
         height: 60,
         decoration: BoxDecoration(
-          color: etsyCardColor,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.grey.shade800)
+            color: etsyCardColor,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.grey.shade800)
         ),
         child: Center(
           child: Row(
@@ -157,8 +159,12 @@ class EtsyShopPage extends StatelessWidget {
                       color: Colors.grey[800],
                     ),
                     clipBehavior: Clip.hardEdge,
-                    child: Image.network(p1.imageUrl, fit: BoxFit.cover, 
-                      errorBuilder: (ctx, err, stack) => const Icon(Icons.image, color: Colors.grey, size: 50)),
+                    child: CachedNetworkImage( // ĐÃ SỬA Ở ĐÂY
+                      imageUrl: p1.imageUrl,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => const Center(child: CircularProgressIndicator(color: Colors.deepOrange)),
+                      errorWidget: (context, url, error) => const Icon(Icons.image_not_supported, color: Colors.grey, size: 50),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 10),

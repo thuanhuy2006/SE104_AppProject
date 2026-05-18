@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart'; // Đã thêm import
 
 import '../constants/app_colors.dart';
 import '../models/app_models.dart';
@@ -33,18 +34,18 @@ class EtsyHeader extends StatelessWidget {
                     CircleAvatar(
                       radius: 25,
                       backgroundColor: userProvider.isSeller ? Colors.deepOrange : Colors.grey.shade700,
-                      child: Text(userProvider.currentUser?.name[0].toUpperCase() ?? "U", 
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20)),
+                      child: Text(userProvider.currentUser?.name[0].toUpperCase() ?? "U",
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20)),
                     ),
                     const SizedBox(width: 15),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(userProvider.currentUser?.name ?? 'Người dùng', 
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
-                          Text(userProvider.currentUser?.email ?? '', 
-                            style: const TextStyle(color: Colors.grey, fontSize: 14)),
+                          Text(userProvider.currentUser?.name ?? 'Người dùng',
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+                          Text(userProvider.currentUser?.email ?? '',
+                              style: const TextStyle(color: Colors.grey, fontSize: 14)),
                         ],
                       ),
                     ),
@@ -52,7 +53,7 @@ class EtsyHeader extends StatelessWidget {
                 ),
               ),
               const Divider(color: Colors.grey, height: 1),
-              
+
               // Cài đặt tài khoản (Sửa Tên & Địa chỉ)
               _buildMenuTile(context, Icons.settings_outlined, "Cài đặt tài khoản", () {
                 Navigator.pop(ctx);
@@ -66,7 +67,7 @@ class EtsyHeader extends StatelessWidget {
               }),
 
               const Divider(color: Colors.grey, height: 1),
-              
+
               // Đăng xuất
               _buildMenuTile(context, Icons.logout, "Đăng xuất", () {
                 userProvider.logout();
@@ -124,7 +125,7 @@ class EtsyHeader extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 15),
-            
+
             // Icon Giỏ hàng
             InkWell(
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const EtsyCartPage())),
@@ -135,14 +136,14 @@ class EtsyHeader extends StatelessWidget {
                   Consumer<CartProvider>(
                     builder: (_, cart, __) => cart.itemCount > 0
                         ? Positioned(
-                            right: -5, top: -5,
-                            child: Container(
-                              padding: const EdgeInsets.all(2),
-                              decoration: const BoxDecoration(color: Colors.deepOrange, shape: BoxShape.circle),
-                              constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
-                              child: Text('${cart.itemCount}', style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
-                            ),
-                          )
+                      right: -5, top: -5,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: const BoxDecoration(color: Colors.deepOrange, shape: BoxShape.circle),
+                        constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
+                        child: Text('${cart.itemCount}', style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+                      ),
+                    )
                         : const SizedBox.shrink(),
                   ),
                 ],
@@ -162,9 +163,9 @@ class EtsyHeader extends StatelessWidget {
               child: CircleAvatar(
                   radius: 18,
                   backgroundColor: userProvider.isSeller ? Colors.deepOrange : Colors.grey.shade700,
-                  child: userProvider.isLoggedIn 
-                    ? Text(userProvider.currentUser!.name[0].toUpperCase(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))
-                    : const Icon(Icons.person, color: Colors.white, size: 24)
+                  child: userProvider.isLoggedIn
+                      ? Text(userProvider.currentUser!.name[0].toUpperCase(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))
+                      : const Icon(Icons.person, color: Colors.white, size: 24)
               ),
             )
           ],
@@ -197,7 +198,12 @@ class EtsyProductCard extends StatelessWidget {
                   width: double.infinity,
                   decoration: BoxDecoration(borderRadius: BorderRadius.circular(10), color: Colors.grey[800]),
                   clipBehavior: Clip.hardEdge,
-                  child: Image.network(product.imageUrl, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.image_not_supported, color: Colors.grey))),
+                  child: CachedNetworkImage( // ĐÃ SỬA Ở ĐÂY
+                    imageUrl: product.imageUrl,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => const Center(child: CircularProgressIndicator(color: Colors.deepOrange, strokeWidth: 2.0)),
+                    errorWidget: (context, url, error) => const Center(child: Icon(Icons.image_not_supported, color: Colors.grey)),
+                  ),
                 ),
                 Positioned(
                   top: 8, right: 8,
