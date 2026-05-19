@@ -342,22 +342,22 @@ class ProductDetailPage extends StatelessWidget {
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(5, (index) {
-                      return IconButton(
+                  // Tìm phần này và sửa lại
+                  FittedBox( // Bọc FittedBox để nó tự động co giãn vừa khung
+                    fit: BoxFit.scaleDown,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(5, (index) => IconButton(
+                        padding: const EdgeInsets.symmetric(horizontal: 4), // Ép nhỏ khoảng cách thừa
+                        constraints: const BoxConstraints(), // Bỏ giới hạn kích thước mặc định
                         icon: Icon(
-                          index < rating ? Icons.star : Icons.star_border,
-                          color: Colors.amber,
-                          size: 36,
+                            index < rating ? Icons.star : Icons.star_border,
+                            color: Colors.amber,
+                            size: 36
                         ),
-                        onPressed: () {
-                          setState(() {
-                            rating = index + 1.0;
-                          });
-                        },
-                      );
-                    }),
+                        onPressed: () => setState(() => rating = index + 1.0),
+                      )),
+                    ),
                   ),
                   const SizedBox(height: 20),
                   TextField(
