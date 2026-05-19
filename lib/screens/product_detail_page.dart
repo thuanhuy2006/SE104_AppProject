@@ -217,27 +217,27 @@ class ProductDetailPage extends StatelessWidget {
 
                   const SizedBox(height: 30),
 
-                  // PHẦN BÌNH LUẬN & ĐÁNH GIÁ (GIỐNG SHOPEE)
+                  // PHẦN BÌNH LUẬN & ĐÁNH GIÁ ĐÃ ĐƯỢC CHÈN NÚT "VIẾT ĐÁNH GIÁ"
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text("Bình luận từ khách hàng", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                      if (product.reviewCount > 0)
-                        TextButton(
-                          onPressed: () {}, // Xem tất cả review
-                          child: const Text("Xem tất cả", style: TextStyle(color: Colors.deepOrange)),
-                        ),
+                      const Text("Bình luận từ khách", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                      TextButton.icon(
+                        onPressed: () => _showReviewDialog(context, product.id),
+                        icon: const Icon(Icons.edit, size: 16, color: Colors.deepOrange),
+                        label: const Text("Viết đánh giá", style: TextStyle(color: Colors.deepOrange)),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 10),
-                  
+
                   StreamBuilder<List<ReviewModel>>(
                     stream: DatabaseService().getProductReviews(product.id),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(child: CircularProgressIndicator(color: Colors.deepOrange));
                       }
-                      
+
                       if (!snapshot.hasData || snapshot.data!.isEmpty) {
                         return const Padding(
                           padding: EdgeInsets.symmetric(vertical: 20),
@@ -251,7 +251,7 @@ class ProductDetailPage extends StatelessWidget {
                       return ListView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        itemCount: reviews.length > 5 ? 5 : reviews.length, // Hiện tối đa 5 cái demo
+                        itemCount: reviews.length, // Đã bỏ giới hạn 5 để hiển thị tất cả
                         itemBuilder: (context, index) {
                           final review = reviews[index];
                           return _buildCommentItem(
@@ -285,7 +285,7 @@ class ProductDetailPage extends StatelessWidget {
                     child: OutlinedButton(
                       onPressed: () {
                         final cart = Provider.of<CartProvider>(context, listen: false);
-                        cart.addItem(product); // ĐÃ SỬA: Truyền object product thay vì nhiều tham số
+                        cart.addItem(product);
                         Provider.of<UserProvider>(context, listen: false).syncCartToFirebase(cart.items.values.toList());
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text("Đã thêm vào giỏ hàng!"), duration: Duration(milliseconds: 1500)),
@@ -305,7 +305,7 @@ class ProductDetailPage extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: () {
                         final cart = Provider.of<CartProvider>(context, listen: false);
-                        cart.addItem(product); // ĐÃ SỬA: Truyền object product
+                        cart.addItem(product);
                         Provider.of<UserProvider>(context, listen: false).syncCartToFirebase(cart.items.values.toList());
                         Navigator.push(context, MaterialPageRoute(builder: (_) => const CheckoutPage()));
                       },
@@ -323,6 +323,102 @@ class ProductDetailPage extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // HÀM HIỂN THỊ HỘP THOẠI VIẾT ĐÁNH GIÁ (MỚI THÊM)
+  void _showReviewDialog(BuildContext context, String productId) {
+    double rating = 5.0;
+    final TextEditingController commentController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: etsyCardColor,
+              title: const Text("Viết đánh giá", style: TextStyle(color: Colors.white)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (index) {
+                      return IconButton(
+                        icon: Icon(
+                          index < rating ? Icons.star : Icons.star_border,
+                          color: Colors.amber,
+                          size: 36,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            rating = index + 1.0;
+                          });
+                        },
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: commentController,
+                    style: const TextStyle(color: Colors.white),
+                    maxLines: 4,
+                    decoration: InputDecoration(
+                      hintText: "Nhập nhận xét của bạn về sản phẩm...",
+                      hintStyle: const TextStyle(color: Colors.grey),
+                      filled: true,
+                      fillColor: Colors.black26,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text("HỦY", style: TextStyle(color: Colors.grey)),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (commentController.text.trim().isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Vui lòng nhập bình luận!"))
+                      );
+                      return;
+                    }
+
+                    try {
+                      await Provider.of<UserProvider>(context, listen: false).submitProductReview(
+                        productId: productId,
+                        rating: rating,
+                        comment: commentController.text.trim(),
+                      );
+
+                      if (context.mounted) {
+                        Navigator.pop(ctx);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("🎉 Đã gửi đánh giá thành công!"), backgroundColor: Colors.green)
+                        );
+                      }
+                    } catch (e) {
+                      // Bắt lỗi nếu người dùng chưa đăng nhập
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(e.toString()), backgroundColor: Colors.redAccent)
+                        );
+                      }
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.deepOrange),
+                  child: const Text("GỬI", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            );
+          }
       ),
     );
   }

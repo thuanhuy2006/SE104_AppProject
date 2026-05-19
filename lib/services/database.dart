@@ -170,7 +170,6 @@ class SellerModel extends UserModel {
   }
 }
 
-/// Lớp Service xử lý các tác vụ với Firebase Firestore
 class DatabaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
@@ -201,12 +200,10 @@ class DatabaseService {
   Future<void> createOrder(OrderModel order) async {
     await _db.collection('orders').doc(order.id).set(order.toMap());
 
-    // Update buyer history
     await _db.collection('users').doc(order.buyerId).update({
       'purchaseHistory': FieldValue.arrayUnion([order.id]),
     });
 
-    // Update seller revenue and sales history
     await _db.collection('users').doc(order.sellerId).update({
       'revenue': FieldValue.increment(order.totalAmount),
       'salesHistory': FieldValue.arrayUnion([order.id]),
@@ -221,7 +218,6 @@ class DatabaseService {
         .map((snapshot) => snapshot.docs.map((doc) => OrderModel.fromMap(doc.data(), doc.id)).toList());
   }
 
-  // --- HÀM MỚI ĐƯỢC THÊM VÀO ĐỂ SỬA LỖI ---
   Stream<List<OrderModel>> getSellerOrders(String sellerId) {
     return _db.collection('orders')
         .where('sellerId', isEqualTo: sellerId)
@@ -240,6 +236,19 @@ class DatabaseService {
     await _db.collection('orders').doc(orderId).update({
       'status': status,
       'timeline': timeline,
+    });
+  }
+
+  // --- HÀM MỚI: HỦY ĐƠN HÀNG ---
+  Future<void> cancelOrder(String orderId, String sellerId, double totalAmount, Map<String, dynamic> timeline) async {
+    await _db.collection('orders').doc(orderId).update({
+      'status': 'Đã hủy',
+      'timeline': timeline,
+    });
+
+    // Trừ lại tiền doanh thu tạm tính của Người bán
+    await _db.collection('users').doc(sellerId).update({
+      'revenue': FieldValue.increment(-totalAmount),
     });
   }
 
@@ -263,7 +272,7 @@ class DatabaseService {
         snapshot.docs.map((doc) => Product.fromMap(doc.data())).toList());
   }
 
-  // REVIEW MANAGEMENT
+  // REVIEW MANAGEMENT (ĐÃ SỬA LỖI BAD STATE)
   Future<void> submitReview(ReviewModel review) async {
     await _db.collection('reviews').doc(review.id).set(review.toMap());
 
@@ -272,8 +281,12 @@ class DatabaseService {
       DocumentSnapshot productDoc = await transaction.get(productRef);
       if (!productDoc.exists) return;
 
-      double currentRating = (productDoc.get('rating') ?? 0.0).toDouble();
-      int currentCount = (productDoc.get('reviewCount') ?? 0).toInt();
+      // SỬA LỖI Ở ĐÂY: Lấy data dưới dạng Map để an toàn kiểm tra dữ liệu null
+      Map<String, dynamic>? data = productDoc.data() as Map<String, dynamic>?;
+
+      // Nếu field chưa từng tồn tại (sản phẩm cũ), mặc định lấy là 0.0 và 0
+      double currentRating = (data != null && data.containsKey('rating')) ? (data['rating'] ?? 0.0).toDouble() : 0.0;
+      int currentCount = (data != null && data.containsKey('reviewCount')) ? (data['reviewCount'] ?? 0).toInt() : 0;
 
       double newRating = ((currentRating * currentCount) + review.rating) / (currentCount + 1);
 

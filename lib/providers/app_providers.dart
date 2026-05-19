@@ -53,7 +53,6 @@ class UserProvider with ChangeNotifier {
   List<OrderModel> get myOrders => _myOrders;
   List<OrderModel> get salesOrders => _salesOrders;
 
-  // --- CẬP NHẬT THÔNG TIN NGÂN HÀNG (Dùng cho SePay ở YouScreen) ---
   Future<void> updateSellerBankInfo({
     required String bankName,
     required String bankAccount,
@@ -66,11 +65,10 @@ class UserProvider with ChangeNotifier {
         bankAccount: bankAccount,
         accountName: accountName,
       );
-      await _initAuth(); // Reload lại thông tin user để nhận cấu hình mới
+      await _initAuth();
     }
   }
 
-  // --- XÁC NHẬN NHẬN HÀNG (Người mua thực hiện ở PurchasesScreen) ---
   Future<void> markAsReceived(String orderId) async {
     final index = _myOrders.indexWhere((o) => o.id == orderId);
     if (index != -1) {
@@ -85,7 +83,6 @@ class UserProvider with ChangeNotifier {
     }
   }
 
-  // --- TIẾN TRÌNH GIAO HÀNG (Seller cập nhật) ---
   Future<void> updateOrderStatus(String orderId, String newStatus) async {
     final index = _salesOrders.indexWhere((o) => o.id == orderId);
     if (index != -1) {
@@ -96,7 +93,45 @@ class UserProvider with ChangeNotifier {
     }
   }
 
-  // --- ĐÁNH GIÁ SẢN PHẨM (Buyer thực hiện) ---
+  Future<void> cancelOrder(String orderId) async {
+    final index = _myOrders.indexWhere((o) => o.id == orderId);
+    if (index != -1) {
+      final order = _myOrders[index];
+      Map<String, DateTime?> newTimeline = Map.from(order.timeline);
+      newTimeline['Đã hủy'] = DateTime.now();
+
+      await DatabaseService().cancelOrder(
+        orderId,
+        order.sellerId,
+        order.totalAmount,
+        newTimeline.map((k, v) => MapEntry(k, v?.toIso8601String())),
+      );
+      _fetchOrders();
+    }
+  }
+
+  // --- HÀM MỚI: ĐÁNH GIÁ TỰ DO TRỰC TIẾP TRÊN SẢN PHẨM ---
+  Future<void> submitProductReview({
+    required String productId,
+    required double rating,
+    required String comment,
+  }) async {
+    if (_currentUser == null) throw Exception("Vui lòng đăng nhập để đánh giá");
+
+    final review = ReviewModel(
+      id: 'REV_${DateTime.now().millisecondsSinceEpoch}_$productId',
+      productId: productId,
+      userId: _currentUser!.uid,
+      userName: _currentUser!.name,
+      rating: rating,
+      comment: comment,
+      timestamp: DateTime.now(),
+    );
+
+    await DatabaseService().submitReview(review);
+  }
+
+  // Hàm đánh giá cũ (dành cho đơn hàng) vẫn giữ lại phòng hờ bạn muốn dùng song song
   Future<void> submitOrderReview({
     required String orderId,
     required double rating,
@@ -151,14 +186,14 @@ class UserProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // SỬA LỖI TRẢ VỀ KIỂU STRING ĐỂ KHỚP VỚI CHECKOUT PAGE
   Future<String> addOrder(List<CartItem> items, double total) async {
     if (_currentUser == null) throw Exception("Chưa đăng nhập");
     String orderId = 'ORD${DateTime.now().millisecondsSinceEpoch}';
     final newOrder = OrderModel(
       id: orderId, buyerId: _currentUser!.uid, sellerId: items.first.sellerId,
-      items: items, totalAmount: total, timestamp: DateTime.now(), status: 'Đã đặt hàng',
-      timeline: {'Đã đặt hàng': DateTime.now()},
+      items: items, totalAmount: total, timestamp: DateTime.now(),
+      status: 'Chờ xác nhận',
+      timeline: {'Chờ xác nhận': DateTime.now()},
     );
     await DatabaseService().createOrder(newOrder);
     return orderId;
@@ -233,7 +268,6 @@ class CartProvider with ChangeNotifier {
   void toggleSelection(String id) { if (_items.containsKey(id)) { _items[id]!.isSelected = !_items[id]!.isSelected; notifyListeners(); } }
   void toggleAll(bool value) { _items.forEach((key, item) => item.isSelected = value); notifyListeners(); }
 
-  // CHUẨN HÓA: Chỉ nhận tham số Product object để tránh lỗi mismatch
   void addItem(Product p) {
     if (_items.containsKey(p.id)) {
       _items[p.id]!.quantity++;

@@ -55,8 +55,18 @@ class PurchasesScreen extends StatelessWidget {
                 ),
                 const Divider(color: Colors.grey, height: 25),
 
-                // TIẾN TRÌNH ĐƠN HÀNG
-                _buildTimeline(order),
+                // TIẾN TRÌNH ĐƠN HÀNG (Nếu bị hủy thì hiện text cảnh báo thay vì Timeline)
+                if (order.status == 'Đã hủy')
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 10),
+                    child: Text(
+                        "🛑 Đơn hàng này đã bị hủy thành công",
+                        style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 14)
+                    ),
+                  )
+                else
+                  _buildTimeline(order),
+
                 const SizedBox(height: 20),
 
                 ...order.items.map((item) {
@@ -98,11 +108,19 @@ class PurchasesScreen extends StatelessWidget {
                   ],
                 ),
 
-                // NÚT CHỨC NĂNG (NHẬN HÀNG / ĐÁNH GIÁ)
+                // NÚT CHỨC NĂNG (HỦY ĐƠN / NHẬN HÀNG / ĐÁNH GIÁ)
                 Padding(
                   padding: const EdgeInsets.only(top: 15),
                   child: Row(
                     children: [
+                      if (order.status == 'Chờ xác nhận')
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () => _showCancelOrderDialog(context, userProvider, order.id),
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
+                            child: const Text("HỦY ĐƠN HÀNG", style: TextStyle(fontWeight: FontWeight.bold)),
+                          ),
+                        ),
                       if (order.status == 'Đang giao')
                         Expanded(
                           child: ElevatedButton(
@@ -119,7 +137,7 @@ class PurchasesScreen extends StatelessWidget {
                             child: const Text("ĐÁNH GIÁ NGAY", style: TextStyle(fontWeight: FontWeight.bold)),
                           ),
                         ),
-                      if (order.review != null)
+                      if (order.status == 'Đã giao' && order.review != null)
                         const Expanded(
                           child: Text("✨ Bạn đã đánh giá đơn hàng này", textAlign: TextAlign.center, style: TextStyle(color: Colors.green, fontStyle: FontStyle.italic)),
                         )
@@ -136,8 +154,11 @@ class PurchasesScreen extends StatelessWidget {
 
   Widget _buildStatusBadge(String status) {
     Color color = Colors.orange;
+    if (status == 'Chờ xác nhận') color = Colors.orange;
+    if (status == 'Đang chuẩn bị hàng') color = Colors.amber;
     if (status == 'Đang giao') color = Colors.blue;
     if (status == 'Đã giao') color = Colors.green;
+    if (status == 'Đã hủy') color = Colors.red;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(5)),
@@ -146,7 +167,8 @@ class PurchasesScreen extends StatelessWidget {
   }
 
   Widget _buildTimeline(OrderModel order) {
-    final List<String> stages = ['Đã đặt hàng', 'Chờ xác nhận', 'Đang giao', 'Đã giao'];
+    // ĐÃ ĐỔI TÊN TIẾN TRÌNH THEO LUỒNG MỚI
+    final List<String> stages = ['Chờ xác nhận', 'Đang chuẩn bị hàng', 'Đang giao', 'Đã giao'];
     int currentIdx = stages.indexOf(order.status);
     if (currentIdx == -1) currentIdx = 0;
 
@@ -172,6 +194,35 @@ class PurchasesScreen extends StatelessWidget {
           ),
         );
       }),
+    );
+  }
+
+  void _showCancelOrderDialog(BuildContext context, UserProvider provider, String orderId) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: etsyCardColor,
+        title: const Text("Xác nhận hủy đơn", style: TextStyle(color: Colors.white)),
+        content: const Text("Bạn có chắc chắn muốn hủy đơn hàng này không? Hành động này không thể hoàn tác.", style: TextStyle(color: Colors.white70)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("KHÔNG", style: TextStyle(color: Colors.grey)),
+          ),
+          TextButton(
+            onPressed: () async {
+              await provider.cancelOrder(orderId);
+              if (context.mounted) {
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("🛑 Đã hủy đơn hàng thành công!"), backgroundColor: Colors.red)
+                );
+              }
+            },
+            child: const Text("HỦY ĐƠN", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
     );
   }
 
