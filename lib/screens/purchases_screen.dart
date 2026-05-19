@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../providers/app_providers.dart';
+import '../models/app_models.dart';
 import '../constants/app_colors.dart';
 
 class PurchasesScreen extends StatelessWidget {
@@ -11,8 +11,7 @@ class PurchasesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
-    final dynamic ordersData = userProvider.myOrders;
-    final List<dynamic> orders = ordersData is List ? ordersData : [];
+    final orders = userProvider.myOrders;
     final formatCurrency = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ', decimalDigits: 0);
 
     return Scaffold(
@@ -32,49 +31,7 @@ class PurchasesScreen extends StatelessWidget {
         padding: const EdgeInsets.all(15),
         itemCount: orders.length,
         itemBuilder: (context, index) {
-          final dynamic order = orders[index];
-
-          // Giải mã ngày tháng an toàn từ Firestore Timestamp hoặc chuỗi định dạng
-          dynamic dateRaw;
-          if (order is Map) {
-            dateRaw = order['date'] ?? order['timestamp'];
-          } else {
-            try { dateRaw = order.timestamp; } catch(_) { dateRaw = null; }
-          }
-
-          DateTime date = DateTime.now();
-          if (dateRaw is Timestamp) {
-            date = dateRaw.toDate();
-          } else if (dateRaw is String) {
-            date = DateTime.tryParse(dateRaw) ?? DateTime.now();
-          } else if (dateRaw is DateTime) {
-            date = dateRaw;
-          }
-
-          // Trích xuất danh sách sản phẩm bên trong đơn hàng
-          List<dynamic> items = [];
-          if (order is Map) {
-            items = order['items'] ?? [];
-          } else {
-            try { items = order.items ?? []; } catch(_) {}
-          }
-
-          // Trích xuất trạng thái đơn hàng
-          String status = 'Đã đặt hàng';
-          if (order is Map) {
-            status = order['status'] ?? 'Đã đặt hàng';
-          } else {
-            try { status = order.status ?? 'Đã đặt hàng'; } catch(_) {}
-          }
-
-          // Tính toán tổng số tiền thanh toán
-          num totalAmount = 0;
-          if (order is Map) {
-            final dynamic t = order['total'] ?? order['totalAmount'] ?? 0;
-            totalAmount = t is num ? t : 0;
-          } else {
-            try { totalAmount = order.totalAmount ?? 0; } catch(_) {}
-          }
+          final order = orders[index];
 
           return Container(
             margin: const EdgeInsets.only(bottom: 20),
@@ -90,85 +47,84 @@ class PurchasesScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      "Ngày đặt: ${DateFormat('dd/MM/yyyy HH:mm').format(date)}",
+                      "Ngày đặt: ${DateFormat('dd/MM/yyyy').format(order.timestamp)}",
                       style: const TextStyle(color: Colors.grey, fontSize: 13),
                     ),
-                    Text(
-                      status,
-                      style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 13),
-                    ),
+                    _buildStatusBadge(order.status),
                   ],
                 ),
                 const Divider(color: Colors.grey, height: 25),
 
-                // Tiến trình xử lý trạng thái đơn hàng
+                // TIẾN TRÌNH ĐƠN HÀNG
                 _buildTimeline(order),
-                const SizedBox(height: 15),
+                const SizedBox(height: 20),
 
-                ...items.map((item) {
-                  String itemTitle = 'Sản phẩm';
-                  dynamic itemQuantity = 1;
-                  num itemPrice = 0;
-
-                  if (item is Map) {
-                    itemTitle = item['title']?.toString() ?? 'Sản phẩm';
-                    itemQuantity = item['quantity'] ?? 1;
-                    final dynamic p = item['price'] ?? 0;
-                    itemPrice = p is num ? p : 0;
-                  } else {
-                    try { itemTitle = item.title ?? 'Sản phẩm'; } catch(_) {}
-                    try { itemQuantity = item.quantity ?? 1; } catch(_) {}
-                    try { itemPrice = item.price ?? 0; } catch(_) {}
-                  }
-
+                ...order.items.map((item) {
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 10),
                     child: Row(
                       children: [
-                        Container(
-                          width: 50,
-                          height: 50,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            color: Colors.grey.shade800,
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            item.imageUrl, width: 60, height: 60, fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(width: 60, height: 60, color: Colors.grey[800], child: const Icon(Icons.image, color: Colors.grey)),
                           ),
-                          child: const Icon(Icons.image, color: Colors.grey),
                         ),
                         const SizedBox(width: 15),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                itemTitle,
-                                style: const TextStyle(color: Colors.white, fontSize: 15),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 5),
-                              Text("x$itemQuantity", style: const TextStyle(color: Colors.grey)),
+                              Text(item.title, style: const TextStyle(color: Colors.white, fontSize: 15), maxLines: 1, overflow: TextOverflow.ellipsis),
+                              Text("x${item.quantity}", style: const TextStyle(color: Colors.grey, fontSize: 13)),
                             ],
                           ),
                         ),
-                        Text(
-                            formatCurrency.format(itemPrice),
-                            style: const TextStyle(color: Colors.white70, fontSize: 14)
-                        ),
+                        Text(formatCurrency.format(item.price), style: const TextStyle(color: Colors.white70, fontSize: 14)),
                       ],
                     ),
                   );
                 }).toList(),
 
                 const Divider(color: Colors.grey, height: 25),
+
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text("Tổng thanh toán:", style: TextStyle(color: Colors.white, fontSize: 15)),
-                    Text(
-                        formatCurrency.format(totalAmount),
-                        style: const TextStyle(color: Colors.deepOrange, fontSize: 18, fontWeight: FontWeight.bold)
-                    ),
+                    Text(formatCurrency.format(order.totalAmount),
+                        style: const TextStyle(color: Colors.deepOrange, fontSize: 18, fontWeight: FontWeight.bold)),
                   ],
+                ),
+
+                // NÚT CHỨC NĂNG (NHẬN HÀNG / ĐÁNH GIÁ)
+                Padding(
+                  padding: const EdgeInsets.only(top: 15),
+                  child: Row(
+                    children: [
+                      if (order.status == 'Đang giao')
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () => userProvider.markAsReceived(order.id),
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+                            child: const Text("ĐÃ NHẬN ĐƯỢC HÀNG", style: TextStyle(fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                      if (order.status == 'Đã giao' && order.review == null)
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () => _showReviewDialog(context, order),
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.black),
+                            child: const Text("ĐÁNH GIÁ NGAY", style: TextStyle(fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                      if (order.review != null)
+                        const Expanded(
+                          child: Text("✨ Bạn đã đánh giá đơn hàng này", textAlign: TextAlign.center, style: TextStyle(color: Colors.green, fontStyle: FontStyle.italic)),
+                        )
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -178,33 +134,40 @@ class PurchasesScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTimeline(dynamic order) {
-    final List<String> stages = ['Đã đặt hàng', 'Chờ xác nhận', 'Đang giao', 'Đã giao'];
-    String currentStatus = 'Đã đặt hàng';
-    if (order is Map) {
-      currentStatus = order['status'] ?? 'Đã đặt hàng';
-    } else {
-      try { currentStatus = order.status ?? 'Đã đặt hàng'; } catch(_) {}
-    }
+  Widget _buildStatusBadge(String status) {
+    Color color = Colors.orange;
+    if (status == 'Đang giao') color = Colors.blue;
+    if (status == 'Đã giao') color = Colors.green;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(5)),
+      child: Text(status, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold)),
+    );
+  }
 
-    int currentIdx = stages.indexOf(currentStatus);
+  Widget _buildTimeline(OrderModel order) {
+    final List<String> stages = ['Đã đặt hàng', 'Chờ xác nhận', 'Đang giao', 'Đã giao'];
+    int currentIdx = stages.indexOf(order.status);
     if (currentIdx == -1) currentIdx = 0;
 
     return Row(
       children: List.generate(stages.length, (index) {
         bool isDone = index <= currentIdx;
         return Expanded(
-          child: Row(
+          child: Column(
             children: [
-              Container(
-                width: 12, height: 12,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isDone ? Colors.green : Colors.grey[700],
-                ),
+              Row(
+                children: [
+                  Expanded(child: Container(height: 2, color: index == 0 ? Colors.transparent : (isDone ? Colors.green : Colors.grey[800]))),
+                  Container(
+                    width: 10, height: 10,
+                    decoration: BoxDecoration(shape: BoxShape.circle, color: isDone ? Colors.green : Colors.grey[800]),
+                  ),
+                  Expanded(child: Container(height: 2, color: index == stages.length - 1 ? Colors.transparent : (index < currentIdx ? Colors.green : Colors.grey[800]))),
+                ],
               ),
-              if (index < stages.length - 1)
-                Expanded(child: Container(height: 2, color: isDone ? Colors.green : Colors.grey[700])),
+              const SizedBox(height: 5),
+              Text(stages[index], style: TextStyle(color: isDone ? Colors.white70 : Colors.grey, fontSize: 8), textAlign: TextAlign.center),
             ],
           ),
         );
@@ -212,18 +175,94 @@ class PurchasesScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyOrders() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.receipt_long_outlined, size: 80, color: Colors.grey.shade700),
-          const SizedBox(height: 20),
-          const Text("Bạn chưa có đơn hàng nào", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 10),
-          const Text("Hãy bắt đầu mua sắm để lấp đầy danh sách này!", style: TextStyle(color: Colors.grey)),
-        ],
+  void _showReviewDialog(BuildContext context, OrderModel order) {
+    double rating = 5.0;
+    final TextEditingController commentController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: etsyCardColor,
+              title: const Text("Đánh giá sản phẩm", style: TextStyle(color: Colors.white)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (index) {
+                      return IconButton(
+                        icon: Icon(
+                          index < rating ? Icons.star : Icons.star_border,
+                          color: Colors.amber,
+                          size: 36,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            rating = index + 1.0;
+                          });
+                        },
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: commentController,
+                    style: const TextStyle(color: Colors.white),
+                    maxLines: 4,
+                    decoration: InputDecoration(
+                      hintText: "Hãy chia sẻ cảm nhận của bạn về sản phẩm...",
+                      hintStyle: const TextStyle(color: Colors.grey),
+                      filled: true,
+                      fillColor: Colors.black26,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text("HỦY", style: TextStyle(color: Colors.grey)),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (commentController.text.trim().isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Vui lòng nhập bình luận!"))
+                      );
+                      return;
+                    }
+
+                    await Provider.of<UserProvider>(context, listen: false).submitOrderReview(
+                      orderId: order.id,
+                      rating: rating,
+                      comment: commentController.text.trim(),
+                      items: order.items,
+                    );
+
+                    if (context.mounted) {
+                      Navigator.pop(ctx);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("🎉 Cảm ơn bạn đã đánh giá!"), backgroundColor: Colors.green)
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.deepOrange),
+                  child: const Text("GỬI ĐÁNH GIÁ", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            );
+          }
       ),
     );
+  }
+
+  Widget _buildEmptyOrders() {
+    return const Center(child: Text("Bạn chưa có đơn hàng nào.", style: TextStyle(color: Colors.grey)));
   }
 }

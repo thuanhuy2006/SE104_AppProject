@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_providers.dart';
 import '../constants/app_colors.dart';
-import '../services/database.dart';
 import 'register_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -15,17 +14,41 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _isLoading = false; // Thêm biến trạng thái loading
 
   Future<void> _login() async {
-    final success = await Provider.of<UserProvider>(
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng nhập đầy đủ Email và Mật khẩu')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    // Gọi hàm login mới, nó sẽ trả về thông báo lỗi (nếu có)
+    final errorMsg = await Provider.of<UserProvider>(
       context,
       listen: false,
-    ).login(_emailController.text, _passwordController.text);
+    ).login(_emailController.text.trim(), _passwordController.text);
 
     if (mounted) {
-      if (!success) {
+      setState(() => _isLoading = false);
+
+      if (errorMsg != null) {
+        // ĐĂNG NHẬP THẤT BẠI: Hiện lỗi chi tiết màu đỏ
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Email hoặc mật khẩu không đúng')),
+          SnackBar(
+            content: Text(errorMsg, style: const TextStyle(fontWeight: FontWeight.bold)),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      } else {
+        // ĐĂNG NHẬP THÀNH CÔNG: Thoát trang login, về trang chủ
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Đăng nhập thành công!'), backgroundColor: Colors.green),
         );
       }
     }
@@ -44,18 +67,12 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const SizedBox(height: 60),
-              const Text(
-                'Đăng Nhập',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Georgia',
-                ),
-              ),
               const SizedBox(height: 40),
+              const Icon(Icons.shopping_bag_outlined, size: 80, color: Colors.deepOrange),
+              const SizedBox(height: 30),
               TextField(
                 controller: _emailController,
+                style: const TextStyle(color: Colors.white),
                 decoration: const InputDecoration(
                   labelText: 'Email',
                   border: OutlineInputBorder(),
@@ -64,6 +81,7 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 20),
               TextField(
                 controller: _passwordController,
+                style: const TextStyle(color: Colors.white),
                 decoration: const InputDecoration(
                   labelText: 'Mật khẩu',
                   border: OutlineInputBorder(),
@@ -75,17 +93,17 @@ class _LoginPageState extends State<LoginPage> {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: _login,
+                  onPressed: _isLoading ? null : _login,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
                     foregroundColor: Colors.black,
                   ),
-                  child: const Text(
-                    'ĐĂNG NHẬP',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
+                  child: _isLoading
+                      ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2))
+                      : const Text('ĐĂNG NHẬP', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
+              const SizedBox(height: 15),
               TextButton(
                 onPressed: () {
                   Navigator.push(
@@ -97,11 +115,6 @@ class _LoginPageState extends State<LoginPage> {
                   'Chưa có tài khoản? Đăng ký ngay',
                   style: TextStyle(color: Colors.white70),
                 ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Gợi ý: nva@gmail.com',
-                style: TextStyle(color: Colors.grey, fontSize: 12),
               ),
             ],
           ),

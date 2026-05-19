@@ -43,7 +43,6 @@ class EtsyCartPage extends StatelessWidget {
             )
           : Column(
               children: [
-                // Dòng "Chọn tất cả"
                 Padding(
                   padding: const EdgeInsets.only(left: 5, top: 10, bottom: 5),
                   child: Row(
@@ -137,28 +136,12 @@ class EtsyCartPage extends StatelessWidget {
                                     const SizedBox(height: 8),
                                     Row(
                                       children: [
-                                        // Nút giảm số lượng
-                                        InkWell(
-                                          onTap: () {
-                                            cart.removeSingleItem(cartItem.id);
-                                            userProvider.syncCartToFirebase(
-                                              cart.items.values.toList(),
-                                            );
-                                          },
-                                          child: Container(
-                                            padding: const EdgeInsets.all(4),
-                                            decoration: BoxDecoration(
-                                              color: Colors.grey.shade800,
-                                              borderRadius:
-                                                  BorderRadius.circular(5),
-                                            ),
-                                            child: const Icon(
-                                              Icons.remove,
-                                              size: 18,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                        ),
+                                        _buildQtyBtn(Icons.remove, () {
+                                          cart.removeSingleItem(cartItem.id);
+                                          userProvider.syncCartToFirebase(
+                                            cart.items.values.toList(),
+                                          );
+                                        }),
                                         Padding(
                                           padding: const EdgeInsets.symmetric(
                                             horizontal: 12,
@@ -172,37 +155,14 @@ class EtsyCartPage extends StatelessWidget {
                                             ),
                                           ),
                                         ),
-                                        // Nút tăng số lượng
-                                        InkWell(
-                                          onTap: () {
-                                            cart.addItem(
-                                              cartItem.id,
-                                              cartItem.title,
-                                              cartItem.price,
-                                              cartItem.imageUrl,
-                                              cartItem.sellerId,
-                                              cartItem.sellerName,
-                                            );
-                                            userProvider.syncCartToFirebase(
-                                              cart.items.values.toList(),
-                                            );
-                                          },
-                                          child: Container(
-                                            padding: const EdgeInsets.all(4),
-                                            decoration: BoxDecoration(
-                                              color: Colors.grey.shade800,
-                                              borderRadius:
-                                                  BorderRadius.circular(5),
-                                            ),
-                                            child: const Icon(
-                                              Icons.add,
-                                              size: 18,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                        ),
+                                        _buildQtyBtn(Icons.add, () {
+                                          // SỬA LỖI: Dùng incrementQuantity thay vì addItem sai tham số
+                                          cart.incrementQuantity(cartItem.id);
+                                          userProvider.syncCartToFirebase(
+                                            cart.items.values.toList(),
+                                          );
+                                        }),
                                         const Spacer(),
-                                        // Nút xóa
                                         IconButton(
                                           icon: const Icon(
                                             Icons.delete_outline,
@@ -227,8 +187,6 @@ class EtsyCartPage extends StatelessWidget {
                     },
                   ),
                 ),
-
-                // Khung Tổng tiền & Thanh toán
                 Container(
                   padding: const EdgeInsets.all(20).copyWith(
                     bottom: MediaQuery.of(context).padding.bottom + 20,
@@ -273,7 +231,7 @@ class EtsyCartPage extends StatelessWidget {
                                     ),
                                   );
                                 }
-                              : null, // Vô hiệu hóa nút nếu chưa chọn món nào
+                              : null,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: cart.selectedTotalAmount > 0
                                 ? Colors.white
@@ -297,6 +255,20 @@ class EtsyCartPage extends StatelessWidget {
                 ),
               ],
             ),
+    );
+  }
+
+  Widget _buildQtyBtn(IconData icon, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade800,
+          borderRadius: BorderRadius.circular(5),
+        ),
+        child: Icon(icon, size: 18, color: Colors.white),
+      ),
     );
   }
 }

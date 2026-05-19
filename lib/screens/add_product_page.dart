@@ -59,9 +59,7 @@ class _AddProductPageState extends State<AddProductPage> {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
-      setState(() {
-        _imageFile = File(pickedFile.path);
-      });
+      setState(() => _imageFile = File(pickedFile.path));
     }
   }
 
@@ -71,38 +69,26 @@ class _AddProductPageState extends State<AddProductPage> {
       final currentUser = userProvider.currentUser;
       
       if (currentUser == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Lỗi: Bạn chưa đăng nhập!')),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Lỗi: Bạn chưa đăng nhập!')));
         return;
       }
 
-      setState(() {
-        _isLoading = true;
-      });
+      setState(() => _isLoading = true);
 
       final isEditing = widget.productToEdit != null;
       String imageUrl = isEditing ? widget.productToEdit!.imageUrl : 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=500';
 
       if (_imageFile != null) {
         try {
-          final storageRef = FirebaseStorage.instance
-              .ref()
-              .child('product_images')
-              .child('${DateTime.now().millisecondsSinceEpoch}.jpg');
+          final storageRef = FirebaseStorage.instance.ref().child('product_images').child('${DateTime.now().millisecondsSinceEpoch}.jpg');
           await storageRef.putFile(_imageFile!);
           imageUrl = await storageRef.getDownloadURL();
         } catch (e) {
-          print('Lỗi Firebase Storage: $e');
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Chưa cấu hình Firebase Storage. Dùng ảnh mặc định tạm thời.')),
-          );
-          // Nếu upload lỗi (do chưa mở Firebase Storage hoặc bị Rules chặn), dùng ảnh cũ hoặc ảnh mặc định
-          imageUrl = isEditing ? widget.productToEdit!.imageUrl : 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=500';
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Lưu ảnh thất bại, sử dụng ảnh mặc định.')));
         }
       }
 
-      final newProduct = Product(
+      final productData = Product(
         id: isEditing ? widget.productToEdit!.id : DateTime.now().millisecondsSinceEpoch.toString(),
         title: _titleController.text.trim(),
         price: int.parse(_priceController.text.trim()),
@@ -110,28 +96,26 @@ class _AddProductPageState extends State<AddProductPage> {
         imageUrl: imageUrl, 
         category: _selectedCategory,
         sellerId: currentUser.uid,
+        sellerName: currentUser.name,
         stockQuantity: int.tryParse(_stockQuantityController.text.trim()) ?? 1,
         vouchers: _voucherController.text.trim().isNotEmpty ? [_voucherController.text.trim()] : [],
         revenue: isEditing ? widget.productToEdit!.revenue : 0.0,
+        rating: isEditing ? widget.productToEdit!.rating : 0.0,
+        reviewCount: isEditing ? widget.productToEdit!.reviewCount : 0,
       );
 
       final productProvider = Provider.of<ProductProvider>(context, listen: false);
       if (isEditing) {
-        await productProvider.updateProduct(newProduct);
+        await productProvider.updateProduct(productData);
       } else {
-        await productProvider.addProduct(newProduct);
+        await productProvider.addProduct(productData);
       }
 
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(isEditing ? '🎉 Cập nhật sản phẩm thành công.' : '🎉 Chúc mừng! Sản phẩm đã được đăng bán thành công.'),
-            backgroundColor: Colors.green,
-          ),
+          SnackBar(content: Text(isEditing ? '🎉 Cập nhật thành công!' : '🎉 Đăng bán thành công!'), backgroundColor: Colors.green),
         );
       }
     }
@@ -139,11 +123,10 @@ class _AddProductPageState extends State<AddProductPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isEditing = widget.productToEdit != null;
     return Scaffold(
       backgroundColor: etsyBackground,
       appBar: AppBar(
-        title: Text(isEditing ? 'Cập nhật sản phẩm' : 'Đăng sản phẩm mới', style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(widget.productToEdit != null ? 'Chỉnh sửa sản phẩm' : 'Đăng bán sản phẩm', style: const TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: etsyBackground,
         elevation: 0,
       ),
@@ -154,143 +137,78 @@ class _AddProductPageState extends State<AddProductPage> {
             child: ListView(
               padding: const EdgeInsets.all(20.0),
               children: [
-                const Text("Thông tin cơ bản", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                const Text("THÔNG TIN CƠ BẢN", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 15),
-                
-                _buildTextField(_titleController, "Tên sản phẩm", "Ví dụ: Áo thun Vintage"),
+                _buildTextField(_titleController, "Tên sản phẩm"),
                 const SizedBox(height: 20),
-                
                 Row(
                   children: [
-                    Expanded(child: _buildTextField(_priceController, "Giá bán (đ)", "0", isNumber: true)),
+                    Expanded(child: _buildTextField(_priceController, "Giá bán (đ)", isNumber: true)),
                     const SizedBox(width: 15),
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text("Danh mục", style: TextStyle(color: Colors.white, fontSize: 14)),
-                          const SizedBox(height: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            decoration: BoxDecoration(
-                              color: etsyCardColor,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: Colors.grey.shade800),
-                            ),
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
-                                value: _selectedCategory,
-                                dropdownColor: etsyCardColor,
-                                style: const TextStyle(color: Colors.white),
-                                items: _categories.map((cat) => DropdownMenuItem(value: cat, child: Text(cat))).toList(),
-                                onChanged: (val) => setState(() => _selectedCategory = val!),
-                              ),
-                            ),
-                          ),
-                        ],
+                      child: DropdownButtonFormField<String>(
+                        value: _selectedCategory,
+                        dropdownColor: etsyCardColor,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: _inputDecoration("Danh mục"),
+                        items: _categories.map((cat) => DropdownMenuItem(value: cat, child: Text(cat))).toList(),
+                        onChanged: (val) => setState(() => _selectedCategory = val!),
                       ),
                     ),
                   ],
                 ),
-                
                 const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Expanded(child: _buildTextField(_stockQuantityController, "Số lượng kho", "Ví dụ: 10", isNumber: true)),
-                    const SizedBox(width: 15),
-                    Expanded(child: _buildTextField(_voucherController, "Mã giảm giá (nếu có)", "SALE20", isRequired: false)),
-                  ],
-                ),
-
+                _buildTextField(_descriptionController, "Mô tả chi tiết", maxLines: 4),
                 const SizedBox(height: 20),
-                _buildTextField(_descriptionController, "Mô tả chi tiết", "Mô tả sản phẩm của bạn...", maxLines: 4),
-                
-                const SizedBox(height: 20),
-                const Text("Hình ảnh", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                const Text("HÌNH ẢNH", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 10),
-                
                 InkWell(
                   onTap: _pickImage,
                   child: Container(
-                    height: 150,
-                    width: double.infinity,
-                    clipBehavior: Clip.antiAlias,
-                    decoration: BoxDecoration(
-                      color: etsyCardColor,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.grey.shade800, style: BorderStyle.solid),
-                    ),
-                    child: _imageFile != null
-                        ? Image.file(_imageFile!, fit: BoxFit.cover)
-                        : (isEditing && widget.productToEdit!.imageUrl.isNotEmpty && !widget.productToEdit!.imageUrl.contains('unsplash.com'))
-                            ? Image.network(widget.productToEdit!.imageUrl, fit: BoxFit.cover, errorBuilder: (ctx, err, stack) => _buildPlaceholder())
-                            : _buildPlaceholder(),
+                    height: 180,
+                    decoration: BoxDecoration(color: etsyCardColor, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey.shade800)),
+                    child: _imageFile != null 
+                      ? ClipRRect(borderRadius: BorderRadius.circular(12), child: Image.file(_imageFile!, fit: BoxFit.cover))
+                      : const Center(child: Icon(Icons.add_a_photo, color: Colors.grey, size: 40)),
                   ),
                 ),
-                
                 const SizedBox(height: 40),
                 SizedBox(
                   height: 55,
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _saveProduct,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.black,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                    ),
-                    child: _isLoading 
-                        ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2))
-                        : Text(isEditing ? 'CẬP NHẬT SẢN PHẨM' : 'ĐĂNG BÁN NGAY', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.black, shape: const StadiumBorder()),
+                    child: _isLoading ? const CircularProgressIndicator() : const Text("HOÀN TẤT", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   ),
                 ),
               ],
             ),
           ),
-          if (_isLoading)
-            Container(
-              color: Colors.black54,
-              child: const Center(
-                child: CircularProgressIndicator(),
-              ),
-            ),
+          if (_isLoading) Container(color: Colors.black45, child: const Center(child: CircularProgressIndicator())),
         ],
       ),
     );
   }
 
-  Widget _buildPlaceholder() {
-    return const Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(Icons.add_a_photo, color: Colors.grey, size: 40),
-        SizedBox(height: 10),
-        Text("Tải ảnh từ thiết bị", style: TextStyle(color: Colors.grey)),
-      ],
+  Widget _buildTextField(TextEditingController controller, String label, {bool isNumber = false, int maxLines = 1}) {
+    return TextFormField(
+      controller: controller,
+      style: const TextStyle(color: Colors.white),
+      keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+      maxLines: maxLines,
+      decoration: _inputDecoration(label),
+      validator: (val) => val!.isEmpty ? "Vui lòng nhập thông tin" : null,
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String label, String hint, {bool isNumber = false, int maxLines = 1, bool isRequired = true}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(color: Colors.white, fontSize: 14)),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          style: const TextStyle(color: Colors.white),
-          keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-          maxLines: maxLines,
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
-            filled: true,
-            fillColor: etsyCardColor,
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey.shade800)),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Colors.white)),
-          ),
-          validator: isRequired ? (value) => value == null || value.isEmpty ? 'Không được để trống' : null : null,
-        ),
-      ],
+  InputDecoration _inputDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(color: Colors.grey),
+      filled: true,
+      fillColor: etsyCardColor,
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade800)),
+      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.white)),
     );
   }
 }

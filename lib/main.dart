@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
 import 'providers/app_providers.dart';
 import 'screens/main_screen.dart';
 import 'screens/login_page.dart';
@@ -30,7 +29,7 @@ class EtsyCloneApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CartProvider()),
         ChangeNotifierProvider(create: (_) => FavoriteProvider()),
         ChangeNotifierProvider(create: (_) => SearchProvider()),
-        ChangeNotifierProvider(create: (_) => AddressProvider()),
+        // Đã xóa AddressProvider dư thừa ở đây!
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
