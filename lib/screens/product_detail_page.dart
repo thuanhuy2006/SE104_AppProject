@@ -10,6 +10,7 @@ import '../services/database.dart';
 import 'cart_page.dart';
 import 'checkout_page.dart';
 import 'chat_room_page.dart';
+import 'seller_shop_page.dart';
 
 class ProductDetailPage extends StatelessWidget {
   final Product product;
@@ -162,49 +163,91 @@ class ProductDetailPage extends StatelessWidget {
                   const SizedBox(height: 12),
 
                   // Đánh giá tổng quát
-                  Row(
-                    children: [
-                      Row(
-                        children: List.generate(5, (index) {
-                          return Icon(
-                            index < product.rating.floor() ? Icons.star : Icons.star_border,
-                            color: Colors.amber,
-                            size: 20,
-                          );
-                        }),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        "${product.rating.toStringAsFixed(1)} / 5",
-                        style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        "(${product.reviewCount} đánh giá)",
-                        style: const TextStyle(color: Colors.grey, fontSize: 14),
-                      ),
-                    ],
+                  StreamBuilder<List<ReviewModel>>(
+                    stream: DatabaseService().getProductReviews(product.id),
+                    builder: (context, snapshot) {
+                      double currentRating = product.rating;
+                      int currentCount = product.reviewCount;
+
+                      if (snapshot.hasData) {
+                        final reviews = snapshot.data!;
+                        if (reviews.isNotEmpty) {
+                          currentCount = reviews.length;
+                          double sum = reviews.fold(0.0, (prev, r) => prev + r.rating);
+                          currentRating = sum / currentCount;
+                        } else {
+                          currentCount = 0;
+                          currentRating = 0.0;
+                        }
+                      }
+
+                      int displayStars = currentRating.round();
+
+                      return Row(
+                        children: [
+                          Row(
+                            children: List.generate(5, (index) {
+                              return Icon(
+                                index < displayStars ? Icons.star : Icons.star_border,
+                                color: Colors.amber,
+                                size: 20,
+                              );
+                            }),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            "${currentRating.toStringAsFixed(1)} / 5",
+                            style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            "($currentCount đánh giá)",
+                            style: const TextStyle(color: Colors.grey, fontSize: 14),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                   const Divider(color: Colors.grey, height: 30),
 
-                  Row(
-                    children: [
-                      const CircleAvatar(
-                        backgroundColor: Colors.deepOrange,
-                        radius: 16,
-                        child: Icon(Icons.store, color: Colors.white, size: 16),
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        product.sellerName,
-                        style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500),
-                      ),
-                      const Spacer(),
-                      TextButton(
-                        onPressed: () {}, // Xem shop
-                        child: const Text("Xem Shop", style: TextStyle(color: Colors.deepOrange)),
-                      ),
-                    ],
+                  FutureBuilder<UserModel?>(
+                    future: DatabaseService().getUser(product.sellerId),
+                    builder: (context, snapshot) {
+                      String displayName = product.sellerName;
+                      if (snapshot.hasData && snapshot.data != null) {
+                        displayName = snapshot.data!.name;
+                      }
+
+                      return Row(
+                        children: [
+                          const CircleAvatar(
+                            backgroundColor: Colors.deepOrange,
+                            radius: 16,
+                            child: Icon(Icons.store, color: Colors.white, size: 16),
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            displayName,
+                            style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500),
+                          ),
+                          const Spacer(),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => SellerShopPage(
+                                    sellerId: product.sellerId,
+                                    sellerName: displayName,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: const Text("Xem Shop", style: TextStyle(color: Colors.deepOrange)),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                   const Divider(color: Colors.grey, height: 30),
 
@@ -452,7 +495,7 @@ class ProductDetailPage extends StatelessWidget {
           const SizedBox(height: 6),
           Row(
             children: List.generate(5, (index) => Icon(
-              index < rating.floor() ? Icons.star : Icons.star_border,
+              index < rating.round() ? Icons.star : Icons.star_border,
               color: Colors.amber,
               size: 14,
             )),

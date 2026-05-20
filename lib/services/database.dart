@@ -300,9 +300,12 @@ class DatabaseService {
   Stream<List<ReviewModel>> getProductReviews(String productId) {
     return _db.collection('reviews')
         .where('productId', isEqualTo: productId)
-        .orderBy('timestamp', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => ReviewModel.fromMap(doc.data())).toList());
+        .map((snapshot) {
+          final reviews = snapshot.docs.map((doc) => ReviewModel.fromMap(doc.data())).toList();
+          reviews.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+          return reviews;
+        });
   }
 
   // UTILITIES
