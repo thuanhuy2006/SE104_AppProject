@@ -84,7 +84,10 @@ class _AddProductPageState extends State<AddProductPage> {
           await storageRef.putFile(_imageFile!);
           imageUrl = await storageRef.getDownloadURL();
         } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Lưu ảnh thất bại, sử dụng ảnh mặc định.')));
+          debugPrint('Lỗi upload ảnh: $e');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lưu ảnh thất bại: $e')));
+          }
         }
       }
 
