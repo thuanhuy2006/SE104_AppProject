@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import '../models/app_models.dart';
@@ -14,6 +15,9 @@ class UserProvider with ChangeNotifier {
   List<OrderModel> _myOrders = [];
   List<OrderModel> _salesOrders = [];
 
+  StreamSubscription<List<OrderModel>>? _buyerOrdersSubscription;
+  StreamSubscription<List<OrderModel>>? _sellerOrdersSubscription;
+
   UserProvider() { _initAuth(); }
 
   Future<void> _initAuth() async {
@@ -25,7 +29,9 @@ class UserProvider with ChangeNotifier {
         _isLoggedIn = true;
         _role = _currentUser?.role == 'seller' ? UserRole.seller : UserRole.buyer;
         _fetchOrders();
-      } else { await firebase_auth.FirebaseAuth.instance.signOut(); }
+      } else { 
+        await logout(); 
+      }
     }
     _isInitializing = false;
     notifyListeners();
@@ -33,14 +39,22 @@ class UserProvider with ChangeNotifier {
 
   void _fetchOrders() {
     if (_currentUser == null) return;
-    DatabaseService().getBuyerOrders(_currentUser!.uid).listen((orders) {
+    
+    _buyerOrdersSubscription?.cancel();
+    _buyerOrdersSubscription = DatabaseService().getBuyerOrders(_currentUser!.uid).listen((orders) {
       _myOrders = orders;
       notifyListeners();
+    }, onError: (error) {
+      print("Buyer Orders Stream Error: $error");
     });
+
     if (isSeller) {
-      DatabaseService().getSellerOrders(_currentUser!.uid).listen((orders) {
+      _sellerOrdersSubscription?.cancel();
+      _sellerOrdersSubscription = DatabaseService().getSellerOrders(_currentUser!.uid).listen((orders) {
         _salesOrders = orders;
         notifyListeners();
+      }, onError: (error) {
+        print("Seller Orders Stream Error: $error");
       });
     }
   }
@@ -230,8 +244,14 @@ class UserProvider with ChangeNotifier {
   }
 
   Future<void> logout() async {
+    _buyerOrdersSubscription?.cancel();
+    _sellerOrdersSubscription?.cancel();
     await firebase_auth.FirebaseAuth.instance.signOut();
-    _currentUser = null; _isLoggedIn = false; _role = UserRole.buyer; _myOrders = [];
+    _currentUser = null; 
+    _isLoggedIn = false; 
+    _role = UserRole.buyer; 
+    _myOrders = []; 
+    _salesOrders = [];
     notifyListeners();
   }
 

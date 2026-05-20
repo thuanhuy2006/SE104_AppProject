@@ -204,10 +204,14 @@ class DatabaseService {
       'purchaseHistory': FieldValue.arrayUnion([order.id]),
     });
 
-    await _db.collection('users').doc(order.sellerId).update({
-      'revenue': FieldValue.increment(order.totalAmount),
-      'salesHistory': FieldValue.arrayUnion([order.id]),
-    });
+    try {
+      await _db.collection('users').doc(order.sellerId).update({
+        'revenue': FieldValue.increment(order.totalAmount),
+        'salesHistory': FieldValue.arrayUnion([order.id]),
+      });
+    } catch (e) {
+      print('Firebase Rules blocked writing to seller document: $e');
+    }
   }
 
   Stream<List<OrderModel>> getBuyerOrders(String buyerId) {
@@ -246,10 +250,14 @@ class DatabaseService {
       'timeline': timeline,
     });
 
-    // Trừ lại tiền doanh thu tạm tính của Người bán
-    await _db.collection('users').doc(sellerId).update({
-      'revenue': FieldValue.increment(-totalAmount),
-    });
+    try {
+      // Trừ lại tiền doanh thu tạm tính của Người bán
+      await _db.collection('users').doc(sellerId).update({
+        'revenue': FieldValue.increment(-totalAmount),
+      });
+    } catch (e) {
+      print('Firebase Rules blocked writing to seller document during cancellation: $e');
+    }
   }
 
   // PRODUCT MANAGEMENT

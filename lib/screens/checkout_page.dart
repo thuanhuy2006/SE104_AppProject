@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../providers/app_providers.dart';
 import '../constants/app_colors.dart';
+import '../services/database.dart';
 import 'payment_qr_page.dart';
 
 class CheckoutPage extends StatefulWidget {
@@ -298,12 +299,23 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
-                                  Text(
-                                    "Bán bởi: ${item.sellerName}",
-                                    style: const TextStyle(
-                                      color: Colors.grey,
-                                      fontSize: 11,
-                                    ),
+                                  FutureBuilder<UserModel?>(
+                                    future: DatabaseService().getUser(item.sellerId),
+                                    builder: (context, snapshot) {
+                                      String sName = item.sellerName;
+                                      if (snapshot.hasData && snapshot.data != null) {
+                                        sName = snapshot.data!.name;
+                                      }
+                                      return Text(
+                                        "Bán bởi: $sName",
+                                        style: const TextStyle(
+                                          color: Colors.grey,
+                                          fontSize: 11,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      );
+                                    },
                                   ),
                                 ],
                               ),
