@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import '../models/app_models.dart';
@@ -11,14 +10,13 @@ class UserProvider with ChangeNotifier {
   UserRole _role = UserRole.buyer;
   bool _isLoggedIn = false;
   bool _isInitializing = true;
+  
+  List<OrderModel> _myOrders = []; 
+  List<OrderModel> _salesOrders = []; 
 
-  List<OrderModel> _myOrders = [];
-  List<OrderModel> _salesOrders = [];
-
-  StreamSubscription<List<OrderModel>>? _buyerOrdersSubscription;
-  StreamSubscription<List<OrderModel>>? _sellerOrdersSubscription;
-
-  UserProvider() { _initAuth(); }
+  UserProvider() {
+    _initAuth();
+  }
 
   Future<void> _initAuth() async {
     final currentUser = firebase_auth.FirebaseAuth.instance.currentUser;
@@ -29,8 +27,8 @@ class UserProvider with ChangeNotifier {
         _isLoggedIn = true;
         _role = _currentUser?.role == 'seller' ? UserRole.seller : UserRole.buyer;
         _fetchOrders();
-      } else { 
-        await logout(); 
+      } else {
+        await firebase_auth.FirebaseAuth.instance.signOut();
       }
     }
     _isInitializing = false;
@@ -40,23 +38,23 @@ class UserProvider with ChangeNotifier {
   void _fetchOrders() {
     if (_currentUser == null) return;
     
-    _buyerOrdersSubscription?.cancel();
-    _buyerOrdersSubscription = DatabaseService().getBuyerOrders(_currentUser!.uid).listen((orders) {
+    DatabaseService().getBuyerOrders(_currentUser!.uid).listen((orders) {
       _myOrders = orders;
       notifyListeners();
-    }, onError: (error) {
-      print("Buyer Orders Stream Error: $error");
     });
 
     if (isSeller) {
-      _sellerOrdersSubscription?.cancel();
-      _sellerOrdersSubscription = DatabaseService().getSellerOrders(_currentUser!.uid).listen((orders) {
+      DatabaseService().getSellerOrders(_currentUser!.uid).listen((orders) {
         _salesOrders = orders;
         notifyListeners();
-      }, onError: (error) {
-        print("Seller Orders Stream Error: $error");
       });
     }
+  }
+
+  // HÀM LÀM MỚI ĐƠN HÀNG
+  Future<void> refreshOrders() async {
+    _fetchOrders();
+    await Future.delayed(const Duration(milliseconds: 500)); // Đợi một chút để UI mượt hơn
   }
 
   UserModel? get currentUser => _currentUser;
@@ -67,34 +65,24 @@ class UserProvider with ChangeNotifier {
   List<OrderModel> get myOrders => _myOrders;
   List<OrderModel> get salesOrders => _salesOrders;
 
-  Future<void> updateSellerBankInfo({
-    required String bankName,
-    required String bankAccount,
-    required String accountName,
-  }) async {
-    if (_currentUser != null && isSeller) {
-      await DatabaseService().updateSellerBankInfo(
-        uid: _currentUser!.uid,
-        bankName: bankName,
-        bankAccount: bankAccount,
-        accountName: accountName,
-      );
-      await _initAuth();
+  double get totalRevenue => _salesOrders.fold(0.0, (sum, order) => sum + order.totalAmount);
+
+  Map<String, double> get revenueByCategory {
+    if (!isSeller) return {};
+    Map<String, double> stats = {'Trang sức': 0.0, 'Quần áo': 0.0, 'Phụ kiện': 0.0, 'Giày dép': 0.0};
+    for (var order in _salesOrders) {
+      for (var item in order.items) {
+        if (stats.containsKey(item.category)) {
+          stats[item.category] = stats[item.category]! + (item.price * item.quantity);
+        }
+      }
     }
+    return stats;
   }
 
-  Future<void> markAsReceived(String orderId) async {
-    final index = _myOrders.indexWhere((o) => o.id == orderId);
-    if (index != -1) {
-      Map<String, DateTime?> newTimeline = Map.from(_myOrders[index].timeline);
-      newTimeline['Đã giao'] = DateTime.now();
-      await DatabaseService().updateOrderStatus(
-          orderId,
-          'Đã giao',
-          newTimeline.map((k, v) => MapEntry(k, v?.toIso8601String()))
-      );
-      _fetchOrders();
-    }
+  List<double> get weeklyRevenueData {
+    if (totalRevenue == 0) return [1200000, 850000, 2300000, 1500000, 3000000, 2100000, 4500000];
+    return List.filled(7, totalRevenue / 7);
   }
 
   Future<void> updateOrderStatus(String orderId, String newStatus) async {
@@ -113,39 +101,89 @@ class UserProvider with ChangeNotifier {
       final order = _myOrders[index];
       Map<String, DateTime?> newTimeline = Map.from(order.timeline);
       newTimeline['Đã hủy'] = DateTime.now();
-
       await DatabaseService().cancelOrder(
         orderId,
         order.sellerId,
         order.totalAmount,
         newTimeline.map((k, v) => MapEntry(k, v?.toIso8601String())),
       );
-      _fetchOrders();
     }
   }
 
-  // --- HÀM MỚI: ĐÁNH GIÁ TỰ DO TRỰC TIẾP TRÊN SẢN PHẨM ---
-  Future<void> submitProductReview({
-    required String productId,
-    required double rating,
-    required String comment,
-  }) async {
-    if (_currentUser == null) throw Exception("Vui lòng đăng nhập để đánh giá");
-
-    final review = ReviewModel(
-      id: 'REV_${DateTime.now().millisecondsSinceEpoch}_$productId',
-      productId: productId,
-      userId: _currentUser!.uid,
-      userName: _currentUser!.name,
-      rating: rating,
-      comment: comment,
-      timestamp: DateTime.now(),
-    );
-
-    await DatabaseService().submitReview(review);
+  Future<void> markAsReceived(String orderId) async {
+    final index = _myOrders.indexWhere((o) => o.id == orderId);
+    if (index != -1) {
+      final order = _myOrders[index];
+      Map<String, DateTime?> newTimeline = Map.from(order.timeline);
+      newTimeline['Đã giao'] = DateTime.now();
+      await DatabaseService().updateOrderStatus(
+        orderId,
+        'Đã giao',
+        newTimeline.map((k, v) => MapEntry(k, v?.toIso8601String())),
+      );
+    }
   }
 
-  // Hàm đánh giá cũ (dành cho đơn hàng) vẫn giữ lại phòng hờ bạn muốn dùng song song
+  Future<void> requestReturn({
+    required String orderId,
+    required String reason,
+    required List<String> imageUrls,
+  }) async {
+    final index = _myOrders.indexWhere((o) => o.id == orderId);
+    if (index != -1) {
+      final order = _myOrders[index];
+      Map<String, DateTime?> newTimeline = Map.from(order.timeline);
+      newTimeline['Yêu cầu trả hàng'] = DateTime.now();
+      await DatabaseService().requestReturn(
+        orderId: orderId,
+        reason: reason,
+        imageUrls: imageUrls,
+        timeline: newTimeline.map((k, v) => MapEntry(k, v?.toIso8601String())),
+      );
+    }
+  }
+
+  Future<void> handleReturnRequest({
+    required String orderId,
+    required bool approve,
+  }) async {
+    final index = _salesOrders.indexWhere((o) => o.id == orderId);
+    if (index != -1) {
+      final order = _salesOrders[index];
+      Map<String, DateTime?> newTimeline = Map.from(order.timeline);
+      final String statusKey = approve ? 'Đã trả hàng' : 'Từ chối trả hàng';
+      newTimeline[statusKey] = DateTime.now();
+
+      await DatabaseService().handleReturnRequest(
+        orderId: orderId,
+        sellerId: order.sellerId,
+        totalAmount: order.totalAmount,
+        approve: approve,
+        timeline: newTimeline.map((k, v) => MapEntry(k, v?.toIso8601String())),
+        returnRequestData: order.returnRequest ?? {},
+      );
+    }
+  }
+
+  Future<void> updateSellerBankInfo({
+    required String bankName,
+    required String bankAccount,
+    required String accountName,
+  }) async {
+    if (_currentUser == null) return;
+    await DatabaseService().updateSellerBankInfo(
+      uid: _currentUser!.uid,
+      bankName: bankName,
+      bankAccount: bankAccount,
+      accountName: accountName,
+    );
+    UserModel? fetchedUser = await DatabaseService().getUser(_currentUser!.uid);
+    if (fetchedUser != null) {
+      _currentUser = fetchedUser;
+      notifyListeners();
+    }
+  }
+
   Future<void> submitOrderReview({
     required String orderId,
     required double rating,
@@ -153,12 +191,7 @@ class UserProvider with ChangeNotifier {
     required List<CartItem> items,
   }) async {
     if (_currentUser == null) return;
-    final reviewData = {
-      'rating': rating,
-      'comment': comment,
-      'timestamp': DateTime.now().toIso8601String(),
-    };
-
+    final reviewData = {'rating': rating, 'comment': comment, 'timestamp': DateTime.now().toIso8601String()};
     for (var item in items) {
       final review = ReviewModel(
         id: 'REV_${DateTime.now().millisecondsSinceEpoch}_${item.id}',
@@ -201,15 +234,19 @@ class UserProvider with ChangeNotifier {
   }
 
   Future<String> addOrder(List<CartItem> items, double total) async {
-    if (_currentUser == null) throw Exception("Chưa đăng nhập");
+    if (_currentUser == null) throw Exception("User not logged in");
     String orderId = 'ORD${DateTime.now().millisecondsSinceEpoch}';
     final newOrder = OrderModel(
-      id: orderId, buyerId: _currentUser!.uid, sellerId: items.first.sellerId,
-      items: items, totalAmount: total, timestamp: DateTime.now(),
-      status: 'Chờ xác nhận',
+      id: orderId, buyerId: _currentUser!.uid, sellerId: items.first.sellerId, 
+      items: items, totalAmount: total, timestamp: DateTime.now(), status: 'Chờ xác nhận',
       timeline: {'Chờ xác nhận': DateTime.now()},
     );
     await DatabaseService().createOrder(newOrder);
+    
+    // Đồng bộ trực tiếp vào danh sách local của Provider để cập nhật UI tức thì
+    _myOrders.insert(0, newOrder);
+    notifyListeners();
+    
     return orderId;
   }
 
@@ -232,10 +269,14 @@ class UserProvider with ChangeNotifier {
     try {
       final cred = await firebase_auth.FirebaseAuth.instance.createUserWithEmailAndPassword(email: email, password: password);
       if (cred.user != null) {
-        UserModel newUser = isSellerRole
-            ? SellerModel(uid: cred.user!.uid, email: email, name: name, password: password, address: '', phoneNumber: '', bio: '', revenue: 0.0, salesHistory: [], itemsSelling: [])
-            : BuyerModel(uid: cred.user!.uid, email: email, name: name, password: password, address: '', phoneNumber: '', bio: '', purchaseHistory: [], currentCart: [], discountCodes: []);
-        isSellerRole ? await DatabaseService().saveSeller(newUser as SellerModel) : await DatabaseService().saveBuyer(newUser as BuyerModel);
+        UserModel newUser = isSellerRole 
+          ? SellerModel(uid: cred.user!.uid, email: email, name: name, password: password, address: '', phoneNumber: '', bio: '', revenue: 0.0, salesHistory: [], itemsSelling: [])
+          : BuyerModel(uid: cred.user!.uid, email: email, name: name, password: password, address: '', phoneNumber: '', bio: '', purchaseHistory: [], currentCart: [], discountCodes: []);
+        if (isSellerRole) {
+          await DatabaseService().saveSeller(newUser as SellerModel);
+        } else {
+          await DatabaseService().saveBuyer(newUser as BuyerModel);
+        }
         await _initAuth();
         return null;
       }
@@ -244,14 +285,8 @@ class UserProvider with ChangeNotifier {
   }
 
   Future<void> logout() async {
-    _buyerOrdersSubscription?.cancel();
-    _sellerOrdersSubscription?.cancel();
     await firebase_auth.FirebaseAuth.instance.signOut();
-    _currentUser = null; 
-    _isLoggedIn = false; 
-    _role = UserRole.buyer; 
-    _myOrders = []; 
-    _salesOrders = [];
+    _currentUser = null; _isLoggedIn = false; _role = UserRole.buyer; _myOrders = []; _salesOrders = [];
     notifyListeners();
   }
 
@@ -265,12 +300,25 @@ class ProductProvider with ChangeNotifier {
   List<Product> _products = [];
   bool _isLoading = false;
   List<Product> get products => _products;
+  bool get isLoading => _isLoading;
+
   ProductProvider() { _fetchProducts(); }
+  
   Future<void> _fetchProducts() async {
     _isLoading = true; notifyListeners();
     _products = await DatabaseService().getProducts();
+    if (_products.isEmpty) {
+      _products = [...ProductData.products];
+      for (var p in _products) { await DatabaseService().saveProduct(p); }
+    }
     _isLoading = false; notifyListeners();
   }
+
+  // HÀM LÀM MỚI SẢN PHẨM
+  Future<void> refreshProducts() async {
+    await _fetchProducts();
+  }
+
   List<Product> getProductsBySeller(String sellerId) => _products.where((p) => p.sellerId == sellerId).toList();
   Future<void> addProduct(Product product) async { await DatabaseService().saveProduct(product); _products.insert(0, product); notifyListeners(); }
   Future<void> updateProduct(Product product) async { await DatabaseService().saveProduct(product); final i = _products.indexWhere((p) => p.id == product.id); if (i != -1) { _products[i] = product; notifyListeners(); } }
@@ -292,10 +340,7 @@ class CartProvider with ChangeNotifier {
     if (_items.containsKey(p.id)) {
       _items[p.id]!.quantity++;
     } else {
-      _items[p.id] = CartItem(
-          id: p.id, title: p.title, price: p.price, imageUrl: p.imageUrl,
-          sellerId: p.sellerId, sellerName: p.sellerName, category: p.category
-      );
+      _items[p.id] = CartItem(id: p.id, title: p.title, price: p.price, imageUrl: p.imageUrl, sellerId: p.sellerId, sellerName: p.sellerName, category: p.category);
     }
     notifyListeners();
   }
@@ -310,7 +355,11 @@ class FavoriteProvider with ChangeNotifier {
   final List<String> _favoriteIds = [];
   bool isFavorite(String id) => _favoriteIds.contains(id);
   void toggleFavorite(String id) {
-    if (_favoriteIds.contains(id)) _favoriteIds.remove(id); else _favoriteIds.add(id);
+    if (_favoriteIds.contains(id)) {
+      _favoriteIds.remove(id);
+    } else {
+      _favoriteIds.add(id);
+    }
     notifyListeners();
   }
 }
@@ -320,4 +369,5 @@ class SearchProvider with ChangeNotifier {
   String get query => searchController.text.toLowerCase().trim();
   SearchProvider() { searchController.addListener(() => notifyListeners()); }
   void clearSearch() { searchController.clear(); FocusManager.instance.primaryFocus?.unfocus(); }
+  @override void dispose() { searchController.dispose(); super.dispose(); }
 }

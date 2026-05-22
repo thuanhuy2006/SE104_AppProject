@@ -175,20 +175,15 @@ class ProductDetailPage extends StatelessWidget {
                           currentCount = reviews.length;
                           double sum = reviews.fold(0.0, (prev, r) => prev + r.rating);
                           currentRating = sum / currentCount;
-                        } else {
-                          currentCount = 0;
-                          currentRating = 0.0;
                         }
                       }
-
-                      int displayStars = currentRating.round();
 
                       return Row(
                         children: [
                           Row(
                             children: List.generate(5, (index) {
                               return Icon(
-                                index < displayStars ? Icons.star : Icons.star_border,
+                                index < currentRating.round() ? Icons.star : Icons.star_border,
                                 color: Colors.amber,
                                 size: 20,
                               );
@@ -260,7 +255,6 @@ class ProductDetailPage extends StatelessWidget {
 
                   const SizedBox(height: 30),
 
-                  // PHẦN BÌNH LUẬN & ĐÁNH GIÁ ĐÃ ĐƯỢC CHÈN NÚT "VIẾT ĐÁNH GIÁ"
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -294,7 +288,7 @@ class ProductDetailPage extends StatelessWidget {
                       return ListView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        itemCount: reviews.length, // Đã bỏ giới hạn 5 để hiển thị tất cả
+                        itemCount: reviews.length,
                         itemBuilder: (context, index) {
                           final review = reviews[index];
                           return _buildCommentItem(
@@ -370,98 +364,78 @@ class ProductDetailPage extends StatelessWidget {
     );
   }
 
-  // HÀM HIỂN THỊ HỘP THOẠI VIẾT ĐÁNH GIÁ (MỚI THÊM)
   void _showReviewDialog(BuildContext context, String productId) {
-    double rating = 5.0;
-    final TextEditingController commentController = TextEditingController();
+    double selectedRating = 5.0;
+    final commentController = TextEditingController();
 
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              backgroundColor: etsyCardColor,
-              title: const Text("Viết đánh giá", style: TextStyle(color: Colors.white)),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Tìm phần này và sửa lại
-                  FittedBox( // Bọc FittedBox để nó tự động co giãn vừa khung
-                    fit: BoxFit.scaleDown,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(5, (index) => IconButton(
-                        padding: const EdgeInsets.symmetric(horizontal: 4), // Ép nhỏ khoảng cách thừa
-                        constraints: const BoxConstraints(), // Bỏ giới hạn kích thước mặc định
-                        icon: Icon(
-                            index < rating ? Icons.star : Icons.star_border,
-                            color: Colors.amber,
-                            size: 36
-                        ),
-                        onPressed: () => setState(() => rating = index + 1.0),
-                      )),
+        builder: (context, setState) => AlertDialog(
+          backgroundColor: etsyCardColor,
+          title: const Text("Đánh giá sản phẩm", style: TextStyle(color: Colors.white)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(5, (index) {
+                  return IconButton(
+                    icon: Icon(
+                      index < selectedRating ? Icons.star : Icons.star_border,
+                      color: Colors.amber,
+                      size: 30,
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  TextField(
-                    controller: commentController,
-                    style: const TextStyle(color: Colors.white),
-                    maxLines: 4,
-                    decoration: InputDecoration(
-                      hintText: "Nhập nhận xét của bạn về sản phẩm...",
-                      hintStyle: const TextStyle(color: Colors.grey),
-                      filled: true,
-                      fillColor: Colors.black26,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                  ),
-                ],
+                    onPressed: () => setState(() => selectedRating = index + 1.0),
+                  );
+                }),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text("HỦY", style: TextStyle(color: Colors.grey)),
+              const SizedBox(height: 10),
+              TextField(
+                controller: commentController,
+                style: const TextStyle(color: Colors.white),
+                maxLines: 3,
+                decoration: InputDecoration(
+                  hintText: "Nhập nhận xét của bạn...",
+                  hintStyle: const TextStyle(color: Colors.grey),
+                  enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey.shade800)),
+                  focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
                 ),
-                ElevatedButton(
-                  onPressed: () async {
-                    if (commentController.text.trim().isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Vui lòng nhập bình luận!"))
-                      );
-                      return;
-                    }
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Hủy", style: TextStyle(color: Colors.grey))),
+            ElevatedButton(
+              onPressed: () async {
+                final userProvider = Provider.of<UserProvider>(context, listen: false);
+                final currentUser = userProvider.currentUser;
+                if (currentUser == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Vui lòng đăng nhập để đánh giá')),
+                  );
+                  return;
+                }
 
-                    try {
-                      await Provider.of<UserProvider>(context, listen: false).submitProductReview(
-                        productId: productId,
-                        rating: rating,
-                        comment: commentController.text.trim(),
-                      );
-
-                      if (context.mounted) {
-                        Navigator.pop(ctx);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("🎉 Đã gửi đánh giá thành công!"), backgroundColor: Colors.green)
-                        );
-                      }
-                    } catch (e) {
-                      // Bắt lỗi nếu người dùng chưa đăng nhập
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(e.toString()), backgroundColor: Colors.redAccent)
-                        );
-                      }
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.deepOrange),
-                  child: const Text("GỬI", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                ),
-              ],
-            );
-          }
+                final review = ReviewModel(
+                  id: DateTime.now().millisecondsSinceEpoch.toString(),
+                  productId: productId,
+                  userId: currentUser.uid,
+                  userName: currentUser.name,
+                  rating: selectedRating,
+                  comment: commentController.text,
+                  timestamp: DateTime.now(),
+                );
+                await DatabaseService().submitReview(review);
+                
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Cảm ơn bạn đã đánh giá!"), backgroundColor: Colors.green));
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.deepOrange),
+              child: const Text("Gửi đánh giá", style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -495,7 +469,7 @@ class ProductDetailPage extends StatelessWidget {
           const SizedBox(height: 6),
           Row(
             children: List.generate(5, (index) => Icon(
-              index < rating.round() ? Icons.star : Icons.star_border,
+              index < rating.floor() ? Icons.star : Icons.star_border,
               color: Colors.amber,
               size: 14,
             )),

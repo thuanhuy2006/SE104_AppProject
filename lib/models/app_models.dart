@@ -176,6 +176,7 @@ class OrderModel {
   final String status;
   final Map<String, dynamic>? review; // { 'rating': double, 'comment': String, 'timestamp': String }
   final Map<String, DateTime?> timeline;
+  final Map<String, dynamic>? returnRequest; // { 'reason': String, 'images': List<String>, 'status': String, 'timestamp': String }
 
   OrderModel({
     required this.id,
@@ -187,6 +188,7 @@ class OrderModel {
     this.status = 'Đã đặt hàng',
     this.review,
     this.timeline = const {},
+    this.returnRequest,
   });
 
   Map<String, dynamic> toMap() {
@@ -199,6 +201,7 @@ class OrderModel {
       'status': status,
       'review': review,
       'timeline': timeline.map((key, value) => MapEntry(key, value?.toIso8601String())),
+      'returnRequest': returnRequest,
     };
   }
 
@@ -216,6 +219,7 @@ class OrderModel {
       review: map['review'],
       timeline: (map['timeline'] as Map?)?.map((key, value) =>
         MapEntry(key as String, value != null ? DateTime.parse(value as String) : null)) ?? {},
+      returnRequest: map['returnRequest'],
     );
   }
 }

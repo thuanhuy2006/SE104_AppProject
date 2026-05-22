@@ -1,6 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import '../providers/app_providers.dart';
 import '../models/app_models.dart';
 import '../constants/app_colors.dart';
@@ -108,16 +111,16 @@ class PurchasesScreen extends StatelessWidget {
                   ],
                 ),
 
-                // NÚT CHỨC NĂNG (HỦY ĐƠN / NHẬN HÀNG / ĐÁNH GIÁ)
+                // NÚT CHỨC NĂNG (HỦY ĐƠN / NHẬN HÀNG / ĐÁNH GIÁ / ĐỔI TRẢ HÀNG)
                 Padding(
                   padding: const EdgeInsets.only(top: 15),
                   child: Row(
                     children: [
-                      if (order.status == 'Chờ xác nhận')
+                      if (order.status == 'Chờ xác nhận' || order.status == 'Đã đặt hàng')
                         Expanded(
                           child: ElevatedButton(
                             onPressed: () => _showCancelOrderDialog(context, userProvider, order.id),
-                            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 12)),
                             child: const Text("HỦY ĐƠN HÀNG", style: TextStyle(fontWeight: FontWeight.bold)),
                           ),
                         ),
@@ -125,22 +128,36 @@ class PurchasesScreen extends StatelessWidget {
                         Expanded(
                           child: ElevatedButton(
                             onPressed: () => userProvider.markAsReceived(order.id),
-                            style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 12)),
                             child: const Text("ĐÃ NHẬN ĐƯỢC HÀNG", style: TextStyle(fontWeight: FontWeight.bold)),
                           ),
                         ),
-                      if (order.status == 'Đã giao' && order.review == null)
+                      if (order.status == 'Đã giao') ...[
+                        if (order.review == null) ...[
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () => _showReviewDialog(context, order),
+                              style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.black, padding: const EdgeInsets.symmetric(vertical: 12)),
+                              child: const Text("ĐÁNH GIÁ", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                        ] else ...[
+                          const Expanded(
+                            child: Padding(
+                              padding: EdgeInsets.only(right: 10),
+                              child: Text("✨ Đã đánh giá", style: TextStyle(color: Colors.green, fontStyle: FontStyle.italic, fontSize: 14)),
+                            ),
+                          ),
+                        ],
                         Expanded(
                           child: ElevatedButton(
-                            onPressed: () => _showReviewDialog(context, order),
-                            style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.black),
-                            child: const Text("ĐÁNH GIÁ NGAY", style: TextStyle(fontWeight: FontWeight.bold)),
+                            onPressed: () => _showReturnDialog(context, order),
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.deepOrange, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 12)),
+                            child: const Text("ĐỔI TRẢ HÀNG", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                           ),
                         ),
-                      if (order.status == 'Đã giao' && order.review != null)
-                        const Expanded(
-                          child: Text("✨ Bạn đã đánh giá đơn hàng này", textAlign: TextAlign.center, style: TextStyle(color: Colors.green, fontStyle: FontStyle.italic)),
-                        )
+                      ],
                     ],
                   ),
                 ),
@@ -154,11 +171,14 @@ class PurchasesScreen extends StatelessWidget {
 
   Widget _buildStatusBadge(String status) {
     Color color = Colors.orange;
-    if (status == 'Chờ xác nhận') color = Colors.orange;
+    if (status == 'Chờ xác nhận' || status == 'Đã đặt hàng') color = Colors.orange;
     if (status == 'Đang chuẩn bị hàng') color = Colors.amber;
     if (status == 'Đang giao') color = Colors.blue;
     if (status == 'Đã giao') color = Colors.green;
     if (status == 'Đã hủy') color = Colors.red;
+    if (status == 'Yêu cầu trả hàng') color = Colors.orangeAccent;
+    if (status == 'Đã trả hàng') color = Colors.purple;
+    if (status == 'Từ chối trả hàng') color = Colors.redAccent;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(5)),
@@ -167,6 +187,58 @@ class PurchasesScreen extends StatelessWidget {
   }
 
   Widget _buildTimeline(OrderModel order) {
+    if (order.status == 'Yêu cầu trả hàng') {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 5),
+        child: Row(
+          children: [
+            Icon(Icons.hourglass_empty, color: Colors.orangeAccent, size: 20),
+            SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                "Đang chờ người bán xác nhận yêu cầu đổi trả",
+                style: TextStyle(color: Colors.orangeAccent, fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    if (order.status == 'Đã trả hàng') {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 5),
+        child: Row(
+          children: [
+            Icon(Icons.assignment_return_outlined, color: Colors.purpleAccent, size: 20),
+            SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                "Đơn mua đã được đổi trả thành công",
+                style: TextStyle(color: Colors.purpleAccent, fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    if (order.status == 'Từ chối trả hàng') {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 5),
+        child: Row(
+          children: [
+            Icon(Icons.cancel_outlined, color: Colors.redAccent, size: 20),
+            SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                "Yêu cầu đổi trả của bạn đã bị từ chối",
+                style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     // ĐÃ ĐỔI TÊN TIẾN TRÌNH THEO LUỒNG MỚI
     final List<String> stages = ['Chờ xác nhận', 'Đang chuẩn bị hàng', 'Đang giao', 'Đã giao'];
     int currentIdx = stages.indexOf(order.status);
@@ -315,5 +387,235 @@ class PurchasesScreen extends StatelessWidget {
 
   Widget _buildEmptyOrders() {
     return const Center(child: Text("Bạn chưa có đơn hàng nào.", style: TextStyle(color: Colors.grey)));
+  }
+
+  void _showReturnDialog(BuildContext context, OrderModel order) {
+    final TextEditingController reasonController = TextEditingController();
+    List<File> selectedImages = [];
+    bool isSubmitting = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: etsyBackground,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setState) {
+          Future<void> pickImage() async {
+            final picker = ImagePicker();
+            final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+            if (pickedFile != null) {
+              setState(() {
+                selectedImages.add(File(pickedFile.path));
+              });
+            }
+          }
+
+          Future<void> submitRequest() async {
+            if (reasonController.text.trim().isEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Vui lòng nhập lý do đổi trả!"), backgroundColor: Colors.redAccent),
+              );
+              return;
+            }
+
+            setState(() => isSubmitting = true);
+
+            try {
+              List<String> imageUrls = [];
+              for (int i = 0; i < selectedImages.length; i++) {
+                final storageRef = FirebaseStorage.instance
+                    .ref()
+                    .child('return_proofs')
+                    .child('${order.id}_${DateTime.now().millisecondsSinceEpoch}_$i.jpg');
+                await storageRef.putFile(selectedImages[i]);
+                final downloadUrl = await storageRef.getDownloadURL();
+                imageUrls.add(downloadUrl);
+              }
+
+              await Provider.of<UserProvider>(context, listen: false).requestReturn(
+                orderId: order.id,
+                reason: reasonController.text.trim(),
+                imageUrls: imageUrls,
+              );
+
+              if (context.mounted) {
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("🎉 Đã gửi yêu cầu đổi trả thành công!"), backgroundColor: Colors.green),
+                );
+              }
+            } catch (e) {
+              debugPrint("Lỗi gửi yêu cầu đổi trả: $e");
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text("Lỗi: $e"), backgroundColor: Colors.redAccent),
+                );
+              }
+            } finally {
+              setState(() => isSubmitting = false);
+            }
+          }
+
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+              left: 20,
+              right: 20,
+              top: 20,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 50,
+                      height: 5,
+                      decoration: BoxDecoration(color: Colors.grey[700], borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    "Yêu cầu đổi trả hàng",
+                    style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    "Đơn hàng: ${order.id}",
+                    style: const TextStyle(color: Colors.grey, fontSize: 13),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    "LÝ DO ĐỔI TRẢ",
+                    style: TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: reasonController,
+                    style: const TextStyle(color: Colors.white),
+                    maxLines: 4,
+                    decoration: InputDecoration(
+                      hintText: "Hãy viết rõ lý do hàng bị hỏng, lỗi hoặc không đúng mô tả để được duyệt nhanh chóng...",
+                      hintStyle: const TextStyle(color: Colors.grey),
+                      filled: true,
+                      fillColor: etsyCardColor,
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey.shade800),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "ẢNH MINH CHỨNG HỎNG/LỖI",
+                        style: TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.bold),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.add_a_photo, color: Colors.deepOrange),
+                        onPressed: isSubmitting ? null : pickImage,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  selectedImages.isEmpty
+                      ? InkWell(
+                          onTap: isSubmitting ? null : pickImage,
+                          child: Container(
+                            height: 100,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: etsyCardColor,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey.shade800),
+                            ),
+                            child: const Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.image, color: Colors.grey, size: 28),
+                                  SizedBox(height: 5),
+                                  Text("Bấm vào đây để chọn ảnh", style: TextStyle(color: Colors.grey, fontSize: 13)),
+                                ],
+                              ),
+                            ),
+                          ),
+                        )
+                      : SizedBox(
+                          height: 100,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: selectedImages.length,
+                            itemBuilder: (ctx, index) {
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 15),
+                                child: Stack(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image.file(
+                                        selectedImages[index],
+                                        width: 100,
+                                        height: 100,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: 5,
+                                      right: 5,
+                                      child: InkWell(
+                                        onTap: () {
+                                          setState(() {
+                                            selectedImages.removeAt(index);
+                                          });
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.all(2),
+                                          decoration: const BoxDecoration(
+                                            color: Colors.black54,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(Icons.close, color: Colors.white, size: 16),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                  const SizedBox(height: 30),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: isSubmitting ? null : submitRequest,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.deepOrange,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: isSubmitting
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text("GỬI YÊU CẦU ĐỔI TRẢ", style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
 }

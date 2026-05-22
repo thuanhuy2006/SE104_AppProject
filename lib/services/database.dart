@@ -404,6 +404,56 @@ class DatabaseService {
     return _db.collection('chats').where('participants', arrayContains: userId).orderBy('lastUpdated', descending: true).snapshots();
   }
 
+  Future<void> requestReturn({
+    required String orderId,
+    required String reason,
+    required List<String> imageUrls,
+    required Map<String, dynamic> timeline,
+  }) async {
+    await _db.collection('orders').doc(orderId).update({
+      'status': 'Yêu cầu trả hàng',
+      'timeline': timeline,
+      'returnRequest': {
+        'reason': reason,
+        'images': imageUrls,
+        'status': 'Chờ xác nhận',
+        'timestamp': DateTime.now().toIso8601String(),
+      },
+    });
+  }
+
+  Future<void> handleReturnRequest({
+    required String orderId,
+    required String sellerId,
+    required double totalAmount,
+    required bool approve,
+    required Map<String, dynamic> timeline,
+    required Map<String, dynamic> returnRequestData,
+  }) async {
+    final String newStatus = approve ? 'Đã trả hàng' : 'Từ chối trả hàng';
+    final String newReturnRequestStatus = approve ? 'Đã chấp nhận' : 'Bị từ chối';
+
+    Map<String, dynamic> updatedReturnRequest = Map.from(returnRequestData);
+    updatedReturnRequest['status'] = newReturnRequestStatus;
+
+    await _db.collection('orders').doc(orderId).update({
+      'status': newStatus,
+      'timeline': timeline,
+      'returnRequest': updatedReturnRequest,
+    });
+
+    if (approve) {
+      try {
+        // Trừ lại tiền doanh thu của Người bán khi chấp nhận trả hàng
+        await _db.collection('users').doc(sellerId).update({
+          'revenue': FieldValue.increment(-totalAmount),
+        });
+      } catch (e) {
+        print('Firebase Rules blocked writing to seller document during return refund: $e');
+      }
+    }
+  }
+
   String getChatRoomId(String user1, String user2) {
     List<String> users = [user1, user2];
     users.sort();

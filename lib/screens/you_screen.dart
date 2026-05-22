@@ -8,6 +8,7 @@ import 'profile_screen.dart';
 import 'login_page.dart';
 import 'purchases_screen.dart';
 import 'chat_list_page.dart';
+import 'seller_orders_screen.dart';
 
 class YouScreen extends StatelessWidget {
   const YouScreen({super.key});
@@ -60,6 +61,10 @@ class YouScreen extends StatelessWidget {
             if (userProvider.isSeller) ...[
               _buildMenuItem("Tài khoản ngân hàng", context, () {
                 _showSePayConfigDialog(context, userProvider);
+              }),
+              _buildDivider(),
+              _buildMenuItem("Quản lý đơn hàng (Bán)", context, () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const SellerOrdersScreen()));
               }),
               _buildDivider(),
             ],
