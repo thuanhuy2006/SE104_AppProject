@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import '../models/app_models.dart';
@@ -13,6 +14,9 @@ class UserProvider with ChangeNotifier {
   
   List<OrderModel> _myOrders = []; 
   List<OrderModel> _salesOrders = []; 
+
+  StreamSubscription<List<OrderModel>>? _buyerOrdersSubscription;
+  StreamSubscription<List<OrderModel>>? _sellerOrdersSubscription;
 
   UserProvider() {
     _initAuth();
@@ -38,17 +42,17 @@ class UserProvider with ChangeNotifier {
   void _fetchOrders() {
     if (_currentUser == null) return;
     
-    DatabaseService().getBuyerOrders(_currentUser!.uid).listen((orders) {
+    _buyerOrdersSubscription?.cancel();
+    _buyerOrdersSubscription = DatabaseService().getBuyerOrders(_currentUser!.uid).listen((orders) {
       _myOrders = orders;
       notifyListeners();
     });
 
-    if (isSeller) {
-      DatabaseService().getSellerOrders(_currentUser!.uid).listen((orders) {
-        _salesOrders = orders;
-        notifyListeners();
-      });
-    }
+    _sellerOrdersSubscription?.cancel();
+    _sellerOrdersSubscription = DatabaseService().getSellerOrders(_currentUser!.uid).listen((orders) {
+      _salesOrders = orders;
+      notifyListeners();
+    });
   }
 
   // HÀM LÀM MỚI ĐƠN HÀNG
@@ -91,6 +95,22 @@ class UserProvider with ChangeNotifier {
       final order = _salesOrders[index];
       Map<String, DateTime?> newTimeline = Map.from(order.timeline);
       newTimeline[newStatus] = DateTime.now();
+
+      // Cập nhật local state ngay lập tức để UI thay đổi tức thì
+      _salesOrders[index] = OrderModel(
+        id: order.id,
+        buyerId: order.buyerId,
+        sellerId: order.sellerId,
+        items: order.items,
+        totalAmount: order.totalAmount,
+        timestamp: order.timestamp,
+        status: newStatus,
+        timeline: newTimeline,
+        review: order.review,
+        returnRequest: order.returnRequest,
+      );
+      notifyListeners();
+
       await DatabaseService().updateOrderStatus(orderId, newStatus, newTimeline.map((k, v) => MapEntry(k, v?.toIso8601String())));
     }
   }
@@ -101,6 +121,22 @@ class UserProvider with ChangeNotifier {
       final order = _myOrders[index];
       Map<String, DateTime?> newTimeline = Map.from(order.timeline);
       newTimeline['Đã hủy'] = DateTime.now();
+
+      // Cập nhật local state ngay lập tức
+      _myOrders[index] = OrderModel(
+        id: order.id,
+        buyerId: order.buyerId,
+        sellerId: order.sellerId,
+        items: order.items,
+        totalAmount: order.totalAmount,
+        timestamp: order.timestamp,
+        status: 'Đã hủy',
+        timeline: newTimeline,
+        review: order.review,
+        returnRequest: order.returnRequest,
+      );
+      notifyListeners();
+
       await DatabaseService().cancelOrder(
         orderId,
         order.sellerId,
@@ -116,6 +152,22 @@ class UserProvider with ChangeNotifier {
       final order = _myOrders[index];
       Map<String, DateTime?> newTimeline = Map.from(order.timeline);
       newTimeline['Đã giao'] = DateTime.now();
+
+      // Cập nhật local state ngay lập tức
+      _myOrders[index] = OrderModel(
+        id: order.id,
+        buyerId: order.buyerId,
+        sellerId: order.sellerId,
+        items: order.items,
+        totalAmount: order.totalAmount,
+        timestamp: order.timestamp,
+        status: 'Đã giao',
+        timeline: newTimeline,
+        review: order.review,
+        returnRequest: order.returnRequest,
+      );
+      notifyListeners();
+
       await DatabaseService().updateOrderStatus(
         orderId,
         'Đã giao',
@@ -134,6 +186,29 @@ class UserProvider with ChangeNotifier {
       final order = _myOrders[index];
       Map<String, DateTime?> newTimeline = Map.from(order.timeline);
       newTimeline['Yêu cầu trả hàng'] = DateTime.now();
+
+      final returnRequestData = {
+        'reason': reason,
+        'images': imageUrls,
+        'status': 'Chờ xác nhận',
+        'timestamp': DateTime.now().toIso8601String(),
+      };
+
+      // Cập nhật local state ngay lập tức
+      _myOrders[index] = OrderModel(
+        id: order.id,
+        buyerId: order.buyerId,
+        sellerId: order.sellerId,
+        items: order.items,
+        totalAmount: order.totalAmount,
+        timestamp: order.timestamp,
+        status: 'Yêu cầu trả hàng',
+        timeline: newTimeline,
+        review: order.review,
+        returnRequest: returnRequestData,
+      );
+      notifyListeners();
+
       await DatabaseService().requestReturn(
         orderId: orderId,
         reason: reason,
@@ -153,6 +228,24 @@ class UserProvider with ChangeNotifier {
       Map<String, DateTime?> newTimeline = Map.from(order.timeline);
       final String statusKey = approve ? 'Đã trả hàng' : 'Từ chối trả hàng';
       newTimeline[statusKey] = DateTime.now();
+
+      final updatedReturnRequest = Map<String, dynamic>.from(order.returnRequest ?? {});
+      updatedReturnRequest['status'] = approve ? 'Đã chấp nhận' : 'Bị từ chối';
+
+      // Cập nhật local state ngay lập tức
+      _salesOrders[index] = OrderModel(
+        id: order.id,
+        buyerId: order.buyerId,
+        sellerId: order.sellerId,
+        items: order.items,
+        totalAmount: order.totalAmount,
+        timestamp: order.timestamp,
+        status: statusKey,
+        timeline: newTimeline,
+        review: order.review,
+        returnRequest: updatedReturnRequest,
+      );
+      notifyListeners();
 
       await DatabaseService().handleReturnRequest(
         orderId: orderId,
@@ -286,6 +379,10 @@ class UserProvider with ChangeNotifier {
 
   Future<void> logout() async {
     await firebase_auth.FirebaseAuth.instance.signOut();
+    _buyerOrdersSubscription?.cancel();
+    _buyerOrdersSubscription = null;
+    _sellerOrdersSubscription?.cancel();
+    _sellerOrdersSubscription = null;
     _currentUser = null; _isLoggedIn = false; _role = UserRole.buyer; _myOrders = []; _salesOrders = [];
     notifyListeners();
   }

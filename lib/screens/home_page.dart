@@ -17,11 +17,14 @@ class EtsyHomePage extends StatelessWidget {
     final productProvider = Provider.of<ProductProvider>(context);
     final searchQuery = Provider.of<SearchProvider>(context).query;
 
-    // Lọc sản phẩm dựa trên nội dung tìm kiếm
+    // Lọc sản phẩm dựa trên nội dung tìm kiếm (cải thiện độ chính xác)
     final filteredProducts = productProvider.products.where((p) {
       final title = p.title.toLowerCase();
       final category = p.category.toLowerCase();
-      return title.contains(searchQuery) || category.contains(searchQuery);
+      final sellerName = p.sellerName.toLowerCase();
+      return title.contains(searchQuery) ||
+          sellerName.contains(searchQuery) ||
+          category == searchQuery; // Khớp chính xác danh mục để không bị khớp nhầm (như tìm "áo" khớp "Quần áo")
     }).toList();
 
     return Scaffold(
@@ -35,9 +38,6 @@ class EtsyHomePage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Banner chào mừng (Ẩn đi khi đang tìm kiếm để nhường chỗ cho kết quả)
-                  if (searchQuery.isEmpty) const GreetingBanner(),
-
                   const SizedBox(height: 25),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 15),
@@ -101,51 +101,4 @@ class EtsyHomePage extends StatelessWidget {
     );
   }
 }
-
-class GreetingBanner extends StatelessWidget {
-  const GreetingBanner({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 15),
-      child: Container(
-        height: 140,
-        decoration: BoxDecoration(
-            color: const Color(0xFFF3EAC8),
-            borderRadius: BorderRadius.circular(12)
-        ),
-        clipBehavior: Clip.hardEdge,
-        child: Row(
-          children: [
-            const Expanded(
-              flex: 3,
-              child: Padding(
-                padding: const EdgeInsets.all(15.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text("Chào mừng bạn!", style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
-                    SizedBox(height: 10),
-                    Text("Bạn muốn mua gì hay đăng bán gì hôm nay?", style: TextStyle(color: Colors.black87, fontSize: 13)),
-                  ],
-                ),
-              ),
-            ),
-            Expanded(
-              flex: 2,
-              child: CachedNetworkImage( // ĐÃ SỬA Ở ĐÂY
-                imageUrl: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=500&q=60',
-                fit: BoxFit.cover,
-                height: double.infinity,
-                placeholder: (context, url) => const Center(child: CircularProgressIndicator(color: Colors.deepOrange)),
-                errorWidget: (context, url, error) => const Icon(Icons.image_not_supported, color: Colors.grey),
-              ),
-            )
-          ],
-        ),
-      ),
-    );
-  }
-}
+

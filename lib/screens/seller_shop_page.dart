@@ -34,7 +34,6 @@ class SellerShopPage extends StatelessWidget {
       ),
       body: Column(
         children: [
-          const EtsyHeader(), 
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 10.0),
             child: Row(

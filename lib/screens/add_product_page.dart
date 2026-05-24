@@ -83,6 +83,19 @@ class _AddProductPageState extends State<AddProductPage> {
           final storageRef = FirebaseStorage.instance.ref().child('product_images').child('${DateTime.now().millisecondsSinceEpoch}.jpg');
           await storageRef.putFile(_imageFile!);
           imageUrl = await storageRef.getDownloadURL();
+        } on FirebaseException catch (e) {
+          debugPrint('Lỗi upload ảnh (FirebaseException): ${e.code} - ${e.message}');
+          if (mounted) {
+            String errorMsg = 'Lưu ảnh thất bại: ${e.message}';
+            if (e.code == 'object-not-found') {
+              errorMsg = 'Lưu ảnh thất bại: Chưa kích hoạt Firebase Storage hoặc cấu hình sai Bucket. Hãy kích hoạt Storage trên Firebase Console (bấm Get Started)!';
+            }
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text(errorMsg, style: const TextStyle(color: Colors.white)),
+              backgroundColor: Colors.redAccent,
+              duration: const Duration(seconds: 5),
+            ));
+          }
         } catch (e) {
           debugPrint('Lỗi upload ảnh: $e');
           if (mounted) {

@@ -46,7 +46,9 @@ class _LoginPageState extends State<LoginPage> {
         );
       } else {
         // ĐĂNG NHẬP THÀNH CÔNG: Thoát trang login, về trang chủ
-        Navigator.pop(context);
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context);
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Đăng nhập thành công!'), backgroundColor: Colors.green),
         );

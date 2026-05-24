@@ -23,10 +23,7 @@ class YouScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: etsyBackground,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
+        automaticallyImplyLeading: false,
         title: const Text(
           "Bạn",
           style: TextStyle(color: Colors.white, fontFamily: 'Georgia', fontSize: 26, fontWeight: FontWeight.bold),
@@ -63,16 +60,18 @@ class YouScreen extends StatelessWidget {
                 _showSePayConfigDialog(context, userProvider);
               }),
               _buildDivider(),
-              _buildMenuItem("Quản lý đơn hàng (Bán)", context, () {
+              _buildMenuItem("Quản lý đơn hàng", context, () {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const SellerOrdersScreen()));
               }),
               _buildDivider(),
             ],
 
-            _buildMenuItem("Đơn mua", context, () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const PurchasesScreen()));
-            }),
-            _buildDivider(),
+            if (!userProvider.isSeller) ...[
+              _buildMenuItem("Đơn mua", context, () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const PurchasesScreen()));
+              }),
+              _buildDivider(),
+            ],
 
             _buildMenuItem("Tin nhắn", context, () {
               Navigator.push(context, MaterialPageRoute(builder: (_) => const ChatListPage()));
@@ -85,7 +84,9 @@ class YouScreen extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: () {
                   userProvider.logout();
-                  Navigator.pop(context);
+                  if (Navigator.canPop(context)) {
+                    Navigator.pop(context);
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.redAccent.withOpacity(0.1),

@@ -18,6 +18,7 @@ class ProductDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isSeller = Provider.of<UserProvider>(context).isSeller;
     final formatCurrency = NumberFormat.currency(
       locale: 'vi_VN',
       symbol: 'đ',
@@ -111,35 +112,37 @@ class ProductDetailPage extends StatelessWidget {
                         onPressed: () => favProvider.toggleFavorite(product.id),
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    CircleAvatar(
-                      backgroundColor: Colors.black45,
-                      child: InkWell(
-                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const EtsyCartPage())),
-                        child: Stack(
-                          clipBehavior: Clip.none,
-                          alignment: Alignment.center,
-                          children: [
-                            const Icon(Icons.shopping_cart_outlined, color: Colors.white, size: 20),
-                            if (cartCount > 0)
-                              Positioned(
-                                right: -4,
-                                top: -4,
-                                child: Container(
-                                  padding: const EdgeInsets.all(2),
-                                  decoration: const BoxDecoration(color: Colors.deepOrange, shape: BoxShape.circle),
-                                  constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
-                                  child: Text(
-                                    '$cartCount',
-                                    style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
-                                    textAlign: TextAlign.center,
+                    if (!isSeller) ...[
+                      const SizedBox(width: 10),
+                      CircleAvatar(
+                        backgroundColor: Colors.black45,
+                        child: InkWell(
+                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const EtsyCartPage())),
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            alignment: Alignment.center,
+                            children: [
+                              const Icon(Icons.shopping_cart_outlined, color: Colors.white, size: 20),
+                              if (cartCount > 0)
+                                Positioned(
+                                  right: -4,
+                                  top: -4,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(2),
+                                    decoration: const BoxDecoration(color: Colors.deepOrange, shape: BoxShape.circle),
+                                    constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
+                                    child: Text(
+                                      '$cartCount',
+                                      style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                                      textAlign: TextAlign.center,
+                                    ),
                                   ),
                                 ),
-                              ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),
@@ -307,58 +310,59 @@ class ProductDetailPage extends StatelessWidget {
             ),
           ),
 
-          // Thanh điều khiển mua hàng phía dưới cùng
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-            decoration: const BoxDecoration(
-              color: etsyCardColor,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-            ),
-            child: SafeArea(
-              top: false,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () {
-                        final cart = Provider.of<CartProvider>(context, listen: false);
-                        cart.addItem(product);
-                        Provider.of<UserProvider>(context, listen: false).syncCartToFirebase(cart.items.values.toList());
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Đã thêm vào giỏ hàng!"), duration: Duration(milliseconds: 1500)),
-                        );
-                      },
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        side: const BorderSide(color: Colors.grey),
-                        padding: const EdgeInsets.symmetric(vertical: 15),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+          // Thanh điều khiển mua hàng phía dưới cùng (Chỉ hiển thị cho người mua)
+          if (!isSeller)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+              decoration: const BoxDecoration(
+                color: etsyCardColor,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              child: SafeArea(
+                top: false,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          final cart = Provider.of<CartProvider>(context, listen: false);
+                          cart.addItem(product);
+                          Provider.of<UserProvider>(context, listen: false).syncCartToFirebase(cart.items.values.toList());
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("Đã thêm vào giỏ hàng!"), duration: Duration(milliseconds: 1500)),
+                          );
+                        },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          side: const BorderSide(color: Colors.grey),
+                          padding: const EdgeInsets.symmetric(vertical: 15),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                        ),
+                        child: const Text("Thêm vào giỏ", style: TextStyle(fontWeight: FontWeight.bold)),
                       ),
-                      child: const Text("Thêm vào giỏ", style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
-                  ),
-                  const SizedBox(width: 15),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        final cart = Provider.of<CartProvider>(context, listen: false);
-                        cart.addItem(product);
-                        Provider.of<UserProvider>(context, listen: false).syncCartToFirebase(cart.items.values.toList());
-                        Navigator.push(context, MaterialPageRoute(builder: (_) => const CheckoutPage()));
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(vertical: 15),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                    const SizedBox(width: 15),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          final cart = Provider.of<CartProvider>(context, listen: false);
+                          cart.addItem(product);
+                          Provider.of<UserProvider>(context, listen: false).syncCartToFirebase(cart.items.values.toList());
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => const CheckoutPage()));
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(vertical: 15),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                        ),
+                        child: const Text("Mua ngay", style: TextStyle(fontWeight: FontWeight.bold)),
                       ),
-                      child: const Text("Mua ngay", style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
         ],
       ),
     );

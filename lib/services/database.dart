@@ -217,17 +217,23 @@ class DatabaseService {
   Stream<List<OrderModel>> getBuyerOrders(String buyerId) {
     return _db.collection('orders')
         .where('buyerId', isEqualTo: buyerId)
-        .orderBy('timestamp', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => OrderModel.fromMap(doc.data(), doc.id)).toList());
+        .map((snapshot) {
+          final list = snapshot.docs.map((doc) => OrderModel.fromMap(doc.data(), doc.id)).toList();
+          list.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+          return list;
+        });
   }
 
   Stream<List<OrderModel>> getSellerOrders(String sellerId) {
     return _db.collection('orders')
         .where('sellerId', isEqualTo: sellerId)
-        .orderBy('timestamp', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => OrderModel.fromMap(doc.data(), doc.id)).toList());
+        .map((snapshot) {
+          final list = snapshot.docs.map((doc) => OrderModel.fromMap(doc.data(), doc.id)).toList();
+          list.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+          return list;
+        });
   }
 
   Future<void> updateOrderReview(String orderId, Map<String, dynamic> review) async {

@@ -19,11 +19,14 @@ class EtsyShopPage extends StatelessWidget {
     final userProvider = Provider.of<UserProvider>(context);
     final searchQuery = Provider.of<SearchProvider>(context).query;
 
-    // Logic tìm kiếm giống trang chủ để đảm bảo tính nhất quán
+    // Logic tìm kiếm giống trang chủ để đảm bảo tính nhất quán (cải thiện độ chính xác)
     final filteredProducts = products.where((p) {
       final title = p.title.toLowerCase();
       final category = p.category.toLowerCase();
-      return title.contains(searchQuery) || category.contains(searchQuery);
+      final sellerName = p.sellerName.toLowerCase();
+      return title.contains(searchQuery) ||
+          sellerName.contains(searchQuery) ||
+          category == searchQuery; // Khớp chính xác danh mục để không bị khớp nhầm (như tìm "áo" khớp "Quần áo")
     }).toList();
 
     return Scaffold(

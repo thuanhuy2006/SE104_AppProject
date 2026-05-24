@@ -14,14 +14,48 @@ class SellerOrdersScreen extends StatelessWidget {
     final salesOrders = userProvider.salesOrders;
     final formatCurrency = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ', decimalDigits: 0);
 
+    // Sắp xếp các đơn hàng theo mức độ ưu tiên trạng thái
+    final sortedSalesOrders = List<OrderModel>.from(salesOrders)..sort((a, b) {
+      int getStatusPriority(String status) {
+        switch (status) {
+          case 'Chờ xác nhận':
+          case 'Đã đặt hàng':
+            return 1; // Món hàng chờ được xác nhận
+          case 'Đang chuẩn bị hàng':
+            return 2; // Món hàng chờ được giao hàng
+          case 'Đang giao':
+            return 3;
+          case 'Đã giao':
+            return 4;
+          case 'Yêu cầu trả hàng':
+            return 5;
+          case 'Đã trả hàng':
+            return 6;
+          case 'Từ chối trả hàng':
+            return 7;
+          case 'Đã hủy':
+            return 8; // Món hàng đã hủy
+          default:
+            return 9;
+        }
+      }
+      int pA = getStatusPriority(a.status);
+      int pB = getStatusPriority(b.status);
+      if (pA != pB) {
+        return pA.compareTo(pB);
+      }
+      // Nếu cùng trạng thái, sắp xếp theo thời gian mới nhất lên trên
+      return b.timestamp.compareTo(a.timestamp);
+    });
+
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Scaffold(
         backgroundColor: etsyBackground,
         appBar: AppBar(
           backgroundColor: etsyBackground,
           elevation: 0,
-          title: const Text("Quản lý đơn hàng (Bán)", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          title: const Text("Quản lý đơn hàng", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
             onPressed: () => Navigator.pop(context),
@@ -31,25 +65,35 @@ class SellerOrdersScreen extends StatelessWidget {
             labelColor: Colors.deepOrange,
             unselectedLabelColor: Colors.grey,
             tabs: [
-              Tab(text: "Tất cả"),
-              Tab(text: "Đang xử lý"),
-              Tab(text: "Đổi / Trả hàng"),
+              Tab(text: "Xác nhận"),
+              Tab(text: "Đang giao"),
+              Tab(text: "Đã giao"),
+              Tab(text: "Đã hủy"),
             ],
           ),
         ),
-        body: salesOrders.isEmpty
+        body: sortedSalesOrders.isEmpty
             ? _buildEmptyState()
             : TabBarView(
                 children: [
-                  _buildOrdersList(context, salesOrders, formatCurrency),
                   _buildOrdersList(
                     context,
-                    salesOrders.where((o) => o.status == 'Chờ xác nhận' || o.status == 'Đã đặt hàng' || o.status == 'Đang chuẩn bị hàng').toList(),
+                    sortedSalesOrders.where((o) => o.status == 'Chờ xác nhận' || o.status == 'Đã đặt hàng' || o.status == 'Yêu cầu trả hàng').toList(),
                     formatCurrency,
                   ),
                   _buildOrdersList(
                     context,
-                    salesOrders.where((o) => o.status == 'Yêu cầu trả hàng' || o.status == 'Đã trả hàng' || o.status == 'Từ chối trả hàng').toList(),
+                    sortedSalesOrders.where((o) => o.status == 'Đang chuẩn bị hàng' || o.status == 'Đang giao').toList(),
+                    formatCurrency,
+                  ),
+                  _buildOrdersList(
+                    context,
+                    sortedSalesOrders.where((o) => o.status == 'Đã giao').toList(),
+                    formatCurrency,
+                  ),
+                  _buildOrdersList(
+                    context,
+                    sortedSalesOrders.where((o) => o.status == 'Đã hủy' || o.status == 'Đã trả hàng' || o.status == 'Từ chối trả hàng').toList(),
                     formatCurrency,
                   ),
                 ],

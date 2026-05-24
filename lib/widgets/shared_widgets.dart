@@ -126,30 +126,32 @@ class EtsyHeader extends StatelessWidget {
             ),
             const SizedBox(width: 15),
 
-            // Icon Giỏ hàng
-            InkWell(
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const EtsyCartPage())),
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  const Icon(Icons.shopping_cart_outlined, color: Colors.white, size: 26),
-                  Consumer<CartProvider>(
-                    builder: (_, cart, __) => cart.itemCount > 0
-                        ? Positioned(
-                      right: -5, top: -5,
-                      child: Container(
-                        padding: const EdgeInsets.all(2),
-                        decoration: const BoxDecoration(color: Colors.deepOrange, shape: BoxShape.circle),
-                        constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
-                        child: Text('${cart.itemCount}', style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
-                      ),
-                    )
-                        : const SizedBox.shrink(),
-                  ),
-                ],
+            // Icon Giỏ hàng (Chỉ hiển thị cho người mua)
+            if (!userProvider.isSeller) ...[
+              InkWell(
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const EtsyCartPage())),
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    const Icon(Icons.shopping_cart_outlined, color: Colors.white, size: 26),
+                    Consumer<CartProvider>(
+                      builder: (_, cart, __) => cart.itemCount > 0
+                          ? Positioned(
+                        right: -5, top: -5,
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: const BoxDecoration(color: Colors.deepOrange, shape: BoxShape.circle),
+                          constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
+                          child: Text('${cart.itemCount}', style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+                        ),
+                      )
+                          : const SizedBox.shrink(),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(width: 15),
+              const SizedBox(width: 15),
+            ],
 
             // Icon Người dùng (Avatar)
             InkWell(

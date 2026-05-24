@@ -17,6 +17,40 @@ class PurchasesScreen extends StatelessWidget {
     final orders = userProvider.myOrders;
     final formatCurrency = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ', decimalDigits: 0);
 
+    // Sắp xếp các đơn hàng theo mức độ ưu tiên trạng thái
+    final sortedOrders = List<OrderModel>.from(orders)..sort((a, b) {
+      int getStatusPriority(String status) {
+        switch (status) {
+          case 'Chờ xác nhận':
+          case 'Đã đặt hàng':
+            return 1; // Món hàng chờ được xác nhận
+          case 'Đang chuẩn bị hàng':
+            return 2; // Món hàng chờ được giao hàng
+          case 'Đang giao':
+            return 3;
+          case 'Đã giao':
+            return 4;
+          case 'Yêu cầu trả hàng':
+            return 5;
+          case 'Đã trả hàng':
+            return 6;
+          case 'Từ chối trả hàng':
+            return 7;
+          case 'Đã hủy':
+            return 8; // Món hàng đã hủy
+          default:
+            return 9;
+        }
+      }
+      int pA = getStatusPriority(a.status);
+      int pB = getStatusPriority(b.status);
+      if (pA != pB) {
+        return pA.compareTo(pB);
+      }
+      // Nếu cùng trạng thái, sắp xếp theo thời gian mới nhất lên trên
+      return b.timestamp.compareTo(a.timestamp);
+    });
+
     return Scaffold(
       backgroundColor: etsyBackground,
       appBar: AppBar(
@@ -28,13 +62,13 @@ class PurchasesScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: orders.isEmpty
+      body: sortedOrders.isEmpty
           ? _buildEmptyOrders()
           : ListView.builder(
         padding: const EdgeInsets.all(15),
-        itemCount: orders.length,
+        itemCount: sortedOrders.length,
         itemBuilder: (context, index) {
-          final order = orders[index];
+          final order = sortedOrders[index];
 
           return Container(
             margin: const EdgeInsets.only(bottom: 20),
@@ -443,6 +477,17 @@ class PurchasesScreen extends StatelessWidget {
                 Navigator.pop(ctx);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text("🎉 Đã gửi yêu cầu đổi trả thành công!"), backgroundColor: Colors.green),
+                );
+              }
+            } on FirebaseException catch (e) {
+              debugPrint("Lỗi gửi yêu cầu đổi trả (FirebaseException): ${e.code} - ${e.message}");
+              if (context.mounted) {
+                String errorMsg = 'Lỗi: ${e.message}';
+                if (e.code == 'object-not-found') {
+                  errorMsg = 'Lỗi: Chưa kích hoạt Firebase Storage hoặc cấu hình sai Bucket. Hãy kích hoạt Storage trên Firebase Console (bấm Get Started)!';
+                }
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(errorMsg), backgroundColor: Colors.redAccent, duration: const Duration(seconds: 5)),
                 );
               }
             } catch (e) {

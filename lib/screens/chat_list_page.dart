@@ -32,7 +32,12 @@ class ChatListPage extends StatelessWidget {
         title: const Text('Tin nhắn'),
         backgroundColor: etsyBackground,
         foregroundColor: Colors.white,
-        automaticallyImplyLeading: false,
+        leading: Navigator.canPop(context)
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
       ),
       backgroundColor: etsyBackground,
       body: StreamBuilder<QuerySnapshot>(
