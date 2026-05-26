@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import '../services/image_upload_service.dart';
 import '../models/app_models.dart';
 import '../providers/app_providers.dart';
 import '../constants/app_colors.dart';
@@ -80,27 +80,23 @@ class _AddProductPageState extends State<AddProductPage> {
 
       if (_imageFile != null) {
         try {
-          final storageRef = FirebaseStorage.instance.ref().child('product_images').child('${DateTime.now().millisecondsSinceEpoch}.jpg');
-          await storageRef.putFile(_imageFile!);
-          imageUrl = await storageRef.getDownloadURL();
-        } on FirebaseException catch (e) {
-          debugPrint('Lỗi upload ảnh (FirebaseException): ${e.code} - ${e.message}');
+          final uploadedUrl = await ImageUploadService.uploadImage(_imageFile!);
+          if (uploadedUrl != null) {
+            imageUrl = uploadedUrl;
+          } else {
+            throw Exception('Không nhận được liên kết ảnh từ ImgBB. Vui lòng kiểm tra lại API Key hoặc kết nối mạng.');
+          }
+        } catch (e) {
+          debugPrint('Lỗi upload ảnh lên ImgBB: $e');
           if (mounted) {
-            String errorMsg = 'Lưu ảnh thất bại: ${e.message}';
-            if (e.code == 'object-not-found') {
-              errorMsg = 'Lưu ảnh thất bại: Chưa kích hoạt Firebase Storage hoặc cấu hình sai Bucket. Hãy kích hoạt Storage trên Firebase Console (bấm Get Started)!';
-            }
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text(errorMsg, style: const TextStyle(color: Colors.white)),
+              content: Text('Lưu ảnh thất bại: $e', style: const TextStyle(color: Colors.white)),
               backgroundColor: Colors.redAccent,
               duration: const Duration(seconds: 5),
             ));
           }
-        } catch (e) {
-          debugPrint('Lỗi upload ảnh: $e');
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lưu ảnh thất bại: $e')));
-          }
+          setState(() => _isLoading = false);
+          return;
         }
       }
 

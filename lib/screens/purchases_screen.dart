@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import '../services/image_upload_service.dart';
 import '../providers/app_providers.dart';
 import '../models/app_models.dart';
 import '../constants/app_colors.dart';
@@ -458,13 +458,12 @@ class PurchasesScreen extends StatelessWidget {
             try {
               List<String> imageUrls = [];
               for (int i = 0; i < selectedImages.length; i++) {
-                final storageRef = FirebaseStorage.instance
-                    .ref()
-                    .child('return_proofs')
-                    .child('${order.id}_${DateTime.now().millisecondsSinceEpoch}_$i.jpg');
-                await storageRef.putFile(selectedImages[i]);
-                final downloadUrl = await storageRef.getDownloadURL();
-                imageUrls.add(downloadUrl);
+                final uploadedUrl = await ImageUploadService.uploadImage(selectedImages[i]);
+                if (uploadedUrl != null) {
+                  imageUrls.add(uploadedUrl);
+                } else {
+                  throw Exception('Không nhận được liên kết ảnh minh chứng thứ ${i + 1} từ ImgBB. Vui lòng kiểm tra lại API Key hoặc kết nối mạng.');
+                }
               }
 
               await Provider.of<UserProvider>(context, listen: false).requestReturn(
@@ -477,17 +476,6 @@ class PurchasesScreen extends StatelessWidget {
                 Navigator.pop(ctx);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text("🎉 Đã gửi yêu cầu đổi trả thành công!"), backgroundColor: Colors.green),
-                );
-              }
-            } on FirebaseException catch (e) {
-              debugPrint("Lỗi gửi yêu cầu đổi trả (FirebaseException): ${e.code} - ${e.message}");
-              if (context.mounted) {
-                String errorMsg = 'Lỗi: ${e.message}';
-                if (e.code == 'object-not-found') {
-                  errorMsg = 'Lỗi: Chưa kích hoạt Firebase Storage hoặc cấu hình sai Bucket. Hãy kích hoạt Storage trên Firebase Console (bấm Get Started)!';
-                }
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(errorMsg), backgroundColor: Colors.redAccent, duration: const Duration(seconds: 5)),
                 );
               }
             } catch (e) {

@@ -36,13 +36,14 @@ dependencies:
   cupertino_icons: ^1.0.8
   firebase_core: ^4.4.0
   cloud_firestore: ^6.1.2
-  intl: ^0.19.0
+  intl: ^0.20.2
   provider: ^6.1.1
   url_launcher: ^6.2.4
   firebase_auth: ^6.1.4
   image_picker: ^1.2.2
   firebase_storage: ^13.4.1
   cached_network_image: ^3.4.1
+  http: ^1.6.0
 
 dev_dependencies:
   flutter_test:
@@ -54,7 +55,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
-  flutter_launcher_icons: ^0.13.1
+  flutter_launcher_icons: ^0.14.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
