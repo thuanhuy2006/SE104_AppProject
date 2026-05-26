@@ -9,6 +9,7 @@ import 'login_page.dart';
 import 'purchases_screen.dart';
 import 'chat_list_page.dart';
 import 'seller_orders_screen.dart';
+import 'seller_revenue_screen.dart';
 
 class YouScreen extends StatelessWidget {
   const YouScreen({super.key});
@@ -62,6 +63,10 @@ class YouScreen extends StatelessWidget {
               _buildDivider(),
               _buildMenuItem("Quản lý đơn hàng", context, () {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const SellerOrdersScreen()));
+              }),
+              _buildDivider(),
+              _buildMenuItem("Báo cáo doanh thu", context, () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const SellerRevenueScreen()));
               }),
               _buildDivider(),
             ],
