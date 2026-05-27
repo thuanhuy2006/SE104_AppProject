@@ -336,10 +336,6 @@ class UserProvider with ChangeNotifier {
     );
     await DatabaseService().createOrder(newOrder);
     
-    // Đồng bộ trực tiếp vào danh sách local của Provider để cập nhật UI tức thì
-    _myOrders.insert(0, newOrder);
-    notifyListeners();
-    
     return orderId;
   }
 
