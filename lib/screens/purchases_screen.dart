@@ -52,9 +52,9 @@ class PurchasesScreen extends StatelessWidget {
     });
 
     return Scaffold(
-      backgroundColor: etsyBackground,
+      backgroundColor: eraBackground,
       appBar: AppBar(
-        backgroundColor: etsyBackground,
+        backgroundColor: eraBackground,
         elevation: 0,
         title: const Text("Đơn mua của bạn", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         leading: IconButton(
@@ -74,7 +74,7 @@ class PurchasesScreen extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 20),
             padding: const EdgeInsets.all(15),
             decoration: BoxDecoration(
-              color: etsyCardColor,
+              color: eraCardColor,
               borderRadius: BorderRadius.circular(15),
             ),
             child: Column(
@@ -307,7 +307,7 @@ class PurchasesScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: etsyCardColor,
+        backgroundColor: eraCardColor,
         title: const Text("Xác nhận hủy đơn", style: TextStyle(color: Colors.white)),
         content: const Text("Bạn có chắc chắn muốn hủy đơn hàng này không? Hành động này không thể hoàn tác.", style: TextStyle(color: Colors.white70)),
         actions: [
@@ -341,7 +341,7 @@ class PurchasesScreen extends StatelessWidget {
       builder: (ctx) => StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              backgroundColor: etsyCardColor,
+              backgroundColor: eraCardColor,
               title: const Text("Đánh giá sản phẩm", style: TextStyle(color: Colors.white)),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -431,7 +431,7 @@ class PurchasesScreen extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: etsyBackground,
+      backgroundColor: eraBackground,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => StatefulBuilder(
         builder: (context, setState) {
@@ -462,7 +462,7 @@ class PurchasesScreen extends StatelessWidget {
                 if (uploadedUrl != null) {
                   imageUrls.add(uploadedUrl);
                 } else {
-                  throw Exception('Không nhận được liên kết ảnh minh chứng thứ ${i + 1} từ ImgBB. Vui lòng kiểm tra lại API Key hoặc kết nối mạng.');
+                  throw Exception('Không nhận được liên kết ảnh minh chứng thứ ${i + 1} từ Cloudinary. Vui lòng kiểm tra lại cấu hình hoặc kết nối mạng.');
                 }
               }
 
@@ -533,7 +533,7 @@ class PurchasesScreen extends StatelessWidget {
                       hintText: "Hãy viết rõ lý do hàng bị hỏng, lỗi hoặc không đúng mô tả để được duyệt nhanh chóng...",
                       hintStyle: const TextStyle(color: Colors.grey),
                       filled: true,
-                      fillColor: etsyCardColor,
+                      fillColor: eraCardColor,
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(color: Colors.grey.shade800),
@@ -566,7 +566,7 @@ class PurchasesScreen extends StatelessWidget {
                             height: 100,
                             width: double.infinity,
                             decoration: BoxDecoration(
-                              color: etsyCardColor,
+                              color: eraCardColor,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(color: Colors.grey.shade800),
                             ),

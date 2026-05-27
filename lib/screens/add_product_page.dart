@@ -84,10 +84,10 @@ class _AddProductPageState extends State<AddProductPage> {
           if (uploadedUrl != null) {
             imageUrl = uploadedUrl;
           } else {
-            throw Exception('Không nhận được liên kết ảnh từ ImgBB. Vui lòng kiểm tra lại API Key hoặc kết nối mạng.');
+            throw Exception('Không nhận được liên kết ảnh từ Cloudinary. Vui lòng kiểm tra lại cấu hình hoặc kết nối mạng.');
           }
         } catch (e) {
-          debugPrint('Lỗi upload ảnh lên ImgBB: $e');
+          debugPrint('Lỗi upload ảnh lên Cloudinary: $e');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
               content: Text('Lưu ảnh thất bại: $e', style: const TextStyle(color: Colors.white)),
@@ -136,10 +136,10 @@ class _AddProductPageState extends State<AddProductPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: etsyBackground,
+      backgroundColor: eraBackground,
       appBar: AppBar(
         title: Text(widget.productToEdit != null ? 'Chỉnh sửa sản phẩm' : 'Đăng bán sản phẩm', style: const TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: etsyBackground,
+        backgroundColor: eraBackground,
         elevation: 0,
       ),
       body: Stack(
@@ -160,7 +160,7 @@ class _AddProductPageState extends State<AddProductPage> {
                     Expanded(
                       child: DropdownButtonFormField<String>(
                         value: _selectedCategory,
-                        dropdownColor: etsyCardColor,
+                        dropdownColor: eraCardColor,
                         style: const TextStyle(color: Colors.white),
                         decoration: _inputDecoration("Danh mục"),
                         items: _categories.map((cat) => DropdownMenuItem(value: cat, child: Text(cat))).toList(),
@@ -178,7 +178,7 @@ class _AddProductPageState extends State<AddProductPage> {
                   onTap: _pickImage,
                   child: Container(
                     height: 180,
-                    decoration: BoxDecoration(color: etsyCardColor, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey.shade800)),
+                    decoration: BoxDecoration(color: eraCardColor, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey.shade800)),
                     child: _imageFile != null 
                       ? ClipRRect(borderRadius: BorderRadius.circular(12), child: Image.file(_imageFile!, fit: BoxFit.cover))
                       : const Center(child: Icon(Icons.add_a_photo, color: Colors.grey, size: 40)),
@@ -218,7 +218,7 @@ class _AddProductPageState extends State<AddProductPage> {
       labelText: label,
       labelStyle: const TextStyle(color: Colors.grey),
       filled: true,
-      fillColor: etsyCardColor,
+      fillColor: eraCardColor,
       enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade800)),
       focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.white)),
     );

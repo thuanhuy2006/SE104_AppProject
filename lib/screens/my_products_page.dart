@@ -20,9 +20,9 @@ class MyProductsPage extends StatelessWidget {
     final formatCurrency = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ', decimalDigits: 0);
 
     return Scaffold(
-      backgroundColor: etsyBackground,
+      backgroundColor: eraBackground,
       appBar: AppBar(
-        backgroundColor: etsyBackground,
+        backgroundColor: eraBackground,
         elevation: 0,
         title: const Text("Sản phẩm của tôi", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         automaticallyImplyLeading: false, // Hide back button
@@ -38,7 +38,7 @@ class MyProductsPage extends StatelessWidget {
                 return Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: etsyCardColor,
+                    color: eraCardColor,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.grey.shade800),
                   ),
@@ -66,7 +66,7 @@ class MyProductsPage extends StatelessWidget {
                               maxLines: 1, overflow: TextOverflow.ellipsis),
                             const SizedBox(height: 5),
                             Text(formatCurrency.format(product.price), 
-                              style: const TextStyle(color: etsyGreen, fontSize: 14)),
+                              style: const TextStyle(color: eraGreen, fontSize: 14)),
                             Text("Danh mục: ${product.category}", 
                               style: const TextStyle(color: Colors.grey, fontSize: 12)),
                           ],
@@ -122,7 +122,7 @@ class MyProductsPage extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: etsyCardColor,
+        backgroundColor: eraCardColor,
         title: const Text("Xác nhận xóa", style: TextStyle(color: Colors.white)),
         content: const Text("Bạn có chắc chắn muốn gỡ sản phẩm này khỏi cửa hàng?", style: TextStyle(color: Colors.white70)),
         actions: [

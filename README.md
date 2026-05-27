@@ -2,13 +2,13 @@
 
 > **Đồ án môn học:** Nhập môn Công nghệ Phần mềm (SE104)  
 > **Nền tảng phát triển:** Flutter & Firebase  
-> **Thiết kế giao diện:** Dark Mode Modern (Phong cách Etsy)  
+> **Thiết kế giao diện:** Dark Mode Modern (Phong cách Era)  
 
 ---
 
 ## 📌 Giới thiệu ứng dụng
 
-**Era Store** là một ứng dụng di động thương mại điện tử hiện đại được xây dựng dựa trên nền tảng **Flutter** và **Firebase**. Lấy cảm hứng từ mô hình C2C (Customer-to-Customer) của Etsy, ứng dụng cho phép người dùng dễ dàng chuyển đổi linh hoạt giữa vai trò **Người mua (Buyer)** và **Người bán (Seller)**. 
+**Era Store** là một ứng dụng di động thương mại điện tử hiện đại được xây dựng dựa trên nền tảng **Flutter** và **Firebase**. Lấy cảm hứng từ mô hình C2C (Customer-to-Customer) của Era, ứng dụng cho phép người dùng dễ dàng chuyển đổi linh hoạt giữa vai trò **Người mua (Buyer)** và **Người bán (Seller)**. 
 
 Với giao diện tối sang trọng (Dark Theme) tối ưu hóa trải nghiệm người dùng, tích hợp các tính năng thông minh như Chat thời gian thực, Thanh toán tự động qua mã VietQR (SePay API), và quản lý trạng thái đơn hàng đa cấp, **Era Store** mang lại giải pháp quản lý & mua bán hàng hóa toàn diện và mượt mà.
 

@@ -59,9 +59,9 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: etsyBackground,
+      backgroundColor: eraBackground,
       appBar: AppBar(
-        backgroundColor: etsyBackground,
+        backgroundColor: eraBackground,
         elevation: 0,
         title: const Text("Cài đặt tài khoản", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         leading: IconButton(
@@ -128,7 +128,7 @@ class _SettingsPageState extends State<SettingsPage> {
             hintText: hint,
             hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
             filled: true,
-            fillColor: etsyCardColor,
+            fillColor: eraCardColor,
             contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),

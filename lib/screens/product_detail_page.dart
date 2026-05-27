@@ -29,7 +29,7 @@ class ProductDetailPage extends StatelessWidget {
     final cartCount = Provider.of<CartProvider>(context).itemCount;
 
     return Scaffold(
-      backgroundColor: etsyBackground,
+      backgroundColor: eraBackground,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -42,14 +42,14 @@ class ProductDetailPage extends StatelessWidget {
                 fit: BoxFit.cover,
                 placeholder: (context, url) => Container(
                   height: MediaQuery.of(context).size.height * 0.45,
-                  color: etsyCardColor,
+                  color: eraCardColor,
                   child: const Center(
                     child: CircularProgressIndicator(color: Colors.deepOrange),
                   ),
                 ),
                 errorWidget: (context, url, error) => Container(
                   height: MediaQuery.of(context).size.height * 0.45,
-                  color: etsyCardColor,
+                  color: eraCardColor,
                   child: const Icon(Icons.image_not_supported, color: Colors.grey, size: 50),
                 ),
               ),
@@ -117,7 +117,7 @@ class ProductDetailPage extends StatelessWidget {
                       CircleAvatar(
                         backgroundColor: Colors.black45,
                         child: InkWell(
-                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const EtsyCartPage())),
+                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const EraCartPage())),
                           child: Stack(
                             clipBehavior: Clip.none,
                             alignment: Alignment.center,
@@ -262,11 +262,12 @@ class ProductDetailPage extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text("Bình luận từ khách", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                      TextButton.icon(
-                        onPressed: () => _showReviewDialog(context, product.id),
-                        icon: const Icon(Icons.edit, size: 16, color: Colors.deepOrange),
-                        label: const Text("Viết đánh giá", style: TextStyle(color: Colors.deepOrange)),
-                      ),
+                      if (!isSeller)
+                        TextButton.icon(
+                          onPressed: () => _showReviewDialog(context, product.id),
+                          icon: const Icon(Icons.edit, size: 16, color: Colors.deepOrange),
+                          label: const Text("Viết đánh giá", style: TextStyle(color: Colors.deepOrange)),
+                        ),
                     ],
                   ),
                   const SizedBox(height: 10),
@@ -315,7 +316,7 @@ class ProductDetailPage extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
               decoration: const BoxDecoration(
-                color: etsyCardColor,
+                color: eraCardColor,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               ),
               child: SafeArea(
@@ -376,7 +377,7 @@ class ProductDetailPage extends StatelessWidget {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          backgroundColor: etsyCardColor,
+          backgroundColor: eraCardColor,
           title: const Text("Đánh giá sản phẩm", style: TextStyle(color: Colors.white)),
           content: Column(
             mainAxisSize: MainAxisSize.min,

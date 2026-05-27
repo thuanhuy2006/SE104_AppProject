@@ -8,17 +8,17 @@ import 'screens/login_page.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  runApp(const EtsyCloneApp());
+  runApp(const EraCloneApp());
 }
 
 // Màu sắc chủ đạo (Dùng chung)
-const Color etsyBackground = Color(0xFF221F27);
-const Color etsyCardColor = Color(0xFF33303A);
-const Color etsyText = Colors.white;
-const Color etsyGreen = Color(0xFF81C784);
+const Color eraBackground = Color(0xFF221F27);
+const Color eraCardColor = Color(0xFF33303A);
+const Color eraText = Colors.white;
+const Color eraGreen = Color(0xFF81C784);
 
-class EtsyCloneApp extends StatelessWidget {
-  const EtsyCloneApp({super.key});
+class EraCloneApp extends StatelessWidget {
+  const EraCloneApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -36,11 +36,11 @@ class EtsyCloneApp extends StatelessWidget {
         title: 'Era Store',
         theme: ThemeData(
           brightness: Brightness.dark,
-          scaffoldBackgroundColor: etsyBackground,
+          scaffoldBackgroundColor: eraBackground,
           primaryColor: Colors.white,
           colorScheme: const ColorScheme.dark(
             primary: Colors.white,
-            surface: etsyBackground,
+            surface: eraBackground,
           ),
           fontFamily: 'Roboto',
           useMaterial3: true,

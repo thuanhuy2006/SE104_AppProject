@@ -42,7 +42,7 @@ class _SellerRegisterPageState extends State<SellerRegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Đăng ký Người bán'), backgroundColor: etsyBackground),
+      appBar: AppBar(title: const Text('Đăng ký Người bán'), backgroundColor: eraBackground),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(

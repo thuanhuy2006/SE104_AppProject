@@ -61,7 +61,7 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Đăng Nhập'),
-        backgroundColor: etsyBackground,
+        backgroundColor: eraBackground,
       ),
       body: SingleChildScrollView(
         child: Padding(

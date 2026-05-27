@@ -271,6 +271,10 @@ class DatabaseService {
     await _db.collection('products').doc(product.id).set(product.toMap(), SetOptions(merge: true));
   }
 
+  Future<void> deleteProduct(String productId) async {
+    await _db.collection('products').doc(productId).delete();
+  }
+
   Future<List<Product>> getProducts() async {
     try {
       final snapshot = await _db.collection('products').get();

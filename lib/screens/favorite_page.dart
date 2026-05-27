@@ -20,20 +20,20 @@ class FavoritePage extends StatelessWidget {
         .toList();
 
     return Scaffold(
-      backgroundColor: etsyBackground,
+      backgroundColor: eraBackground,
       appBar: AppBar(
-        backgroundColor: etsyBackground,
-        foregroundColor: etsyText,
+        backgroundColor: eraBackground,
+        foregroundColor: eraText,
         elevation: 0,
         title: const Text("Sản phẩm yêu thích", style: TextStyle(fontWeight: FontWeight.bold)),
         // Header thống nhất nếu cần, hoặc dùng AppBar đơn giản ở đây
       ),
       body: Column(
         children: [
-          const EtsyHeader(), // Giữ Header để có thể vào User Menu nhanh
+          const EraHeader(), // Giữ Header để có thể vào User Menu nhanh
           Expanded(
             child: favoriteProducts.isEmpty
-                ? const EtsyEmptyState(
+                ? const EraEmptyState(
                     iconData: Icons.favorite_border,
                     title: "Chưa có sản phẩm yêu thích",
                     subtitle: "Đề xuất cho bạn sẽ chính xác hơn khi bạn thả tim nhiều thứ hơn.",
@@ -48,7 +48,7 @@ class FavoritePage extends StatelessWidget {
                         mainAxisSpacing: 20
                     ),
                     itemCount: favoriteProducts.length,
-                    itemBuilder: (context, index) => EtsyProductCard(product: favoriteProducts[index]),
+                    itemBuilder: (context, index) => EraProductCard(product: favoriteProducts[index]),
                   ),
           ),
         ],

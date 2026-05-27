@@ -47,9 +47,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
     );
 
     return Scaffold(
-      backgroundColor: etsyBackground,
+      backgroundColor: eraBackground,
       appBar: AppBar(
-        backgroundColor: etsyBackground,
+        backgroundColor: eraBackground,
         elevation: 0,
         title: const Text(
           "Xác nhận thanh toán",
@@ -98,7 +98,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 Container(
                   padding: const EdgeInsets.all(15),
                   decoration: BoxDecoration(
-                    color: etsyCardColor,
+                    color: eraCardColor,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.grey.shade800),
                   ),
@@ -163,7 +163,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 const SizedBox(height: 10),
                 Container(
                   decoration: BoxDecoration(
-                    color: etsyCardColor,
+                    color: eraCardColor,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.grey.shade800),
                   ),
@@ -194,7 +194,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 const SizedBox(height: 10),
                 Container(
                   decoration: BoxDecoration(
-                    color: etsyCardColor,
+                    color: eraCardColor,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.grey.shade800),
                   ),
@@ -234,7 +234,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 Container(
                   padding: const EdgeInsets.all(15),
                   decoration: BoxDecoration(
-                    color: etsyCardColor,
+                    color: eraCardColor,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
@@ -375,7 +375,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
               20,
             ).copyWith(bottom: MediaQuery.of(context).padding.bottom + 20),
             decoration: BoxDecoration(
-              color: etsyCardColor,
+              color: eraCardColor,
               border: Border(top: BorderSide(color: Colors.grey.shade800)),
             ),
             child: SizedBox(
@@ -482,7 +482,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: etsyCardColor,
+        backgroundColor: eraCardColor,
         title: const Text(
           "Thay đổi địa chỉ",
           style: TextStyle(color: Colors.white),
@@ -548,7 +548,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
     ];
     showModalBottomSheet(
       context: context,
-      backgroundColor: etsyCardColor,
+      backgroundColor: eraCardColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -592,7 +592,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
   void _showPromoCodeSheet(double totalAmount) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: etsyCardColor,
+      backgroundColor: eraCardColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),

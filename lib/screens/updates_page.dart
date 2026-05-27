@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../widgets/shared_widgets.dart';
 
-class EtsyUpdatesPage extends StatelessWidget {
-  const EtsyUpdatesPage({super.key});
+class EraUpdatesPage extends StatelessWidget {
+  const EraUpdatesPage({super.key});
 
   Widget _buildBoxWithSparklesIcon() {
     return SizedBox(
@@ -41,7 +41,7 @@ class EtsyUpdatesPage extends StatelessWidget {
             right: 5,
             child: Container(
               decoration: const BoxDecoration(
-                color: etsyBackground, // Dùng màu nền để che nét đứt của cuốn sách
+                color: eraBackground, // Dùng màu nền để che nét đứt của cuốn sách
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.search, size: 40, color: Colors.white),
@@ -58,7 +58,7 @@ class EtsyUpdatesPage extends StatelessWidget {
       length: 4,
       child: Scaffold(
         appBar: AppBar(
-          backgroundColor: etsyBackground,
+          backgroundColor: eraBackground,
           elevation: 0,
           titleSpacing: 0,
           toolbarHeight: 0,
@@ -81,23 +81,23 @@ class EtsyUpdatesPage extends StatelessWidget {
         ),
         body: TabBarView(
           children: [
-            const EtsyEmptyState(
+            const EraEmptyState(
               iconData: Icons.notifications_active_outlined,
               title: "Nothing to see here...yet",
               subtitle: "Check back for updates on your favorite items\nand shops—like sales, special offers, and new\nproducts.",
               buttonText: "Start exploring",
             ),
-            EtsyEmptyState(
+            EraEmptyState(
               customIcon: _buildBoxWithSparklesIcon(),
               title: "No favorites or collections",
               subtitle: "Your recommendations get better as you favorite more things.",
             ),
-            EtsyEmptyState(
+            EraEmptyState(
               customIcon: _buildBoxWithSparklesIcon(),
               title: "No saved shops",
               subtitle: "Your recommendations get better as you favorite more things.",
             ),
-            EtsyEmptyState(
+            EraEmptyState(
               customIcon: _buildSearchBookIcon(),
               title: "No saved searches",
             ),

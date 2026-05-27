@@ -8,8 +8,8 @@ import '../widgets/shared_widgets.dart';
 import '../constants/app_colors.dart';
 import 'add_product_page.dart';
 
-class EtsyHomePage extends StatelessWidget {
-  const EtsyHomePage({super.key});
+class EraHomePage extends StatelessWidget {
+  const EraHomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -28,10 +28,10 @@ class EtsyHomePage extends StatelessWidget {
     }).toList();
 
     return Scaffold(
-      backgroundColor: etsyBackground,
+      backgroundColor: eraBackground,
       body: Column(
         children: [
-          const EtsyHeader(),
+          const EraHeader(),
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.only(bottom: 20),
@@ -88,7 +88,7 @@ class EtsyHomePage extends StatelessWidget {
                         ),
                         itemCount: filteredProducts.length,
                         itemBuilder: (context, index) {
-                          return EtsyProductCard(product: filteredProducts[index]);
+                          return EraProductCard(product: filteredProducts[index]);
                         },
                       ),
                     )

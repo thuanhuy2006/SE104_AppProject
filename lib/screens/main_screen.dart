@@ -27,11 +27,11 @@ class _MainScreenState extends State<MainScreen> {
     final isSeller = Provider.of<UserProvider>(context).isSeller;
 
     final List<Widget> pages = [
-      const EtsyHomePage(),
-      const EtsyShopPage(),
+      const EraHomePage(),
+      const EraShopPage(),
       isSeller ? const MyProductsPage() : const FavoritePage(),
       const YouScreen(),
-      isSeller ? const ChatListPage() : const EtsyCartPage(),
+      isSeller ? const ChatListPage() : const EraCartPage(),
     ];
 
     return Scaffold(
@@ -39,7 +39,7 @@ class _MainScreenState extends State<MainScreen> {
       bottomNavigationBar: SafeArea(
         child: BottomNavigationBar(
           type: BottomNavigationBarType.fixed,
-          backgroundColor: etsyBackground,
+          backgroundColor: eraBackground,
           currentIndex: _currentIndex,
           selectedItemColor: Colors.white,
           unselectedItemColor: Colors.grey.shade600,

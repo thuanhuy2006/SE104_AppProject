@@ -40,7 +40,7 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Thông tin cá nhân'),
-        backgroundColor: etsyBackground,
+        backgroundColor: eraBackground,
         automaticallyImplyLeading: false, // Ngăn quay lại trang đăng ký
       ),
       body: Padding(

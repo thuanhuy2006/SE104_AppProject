@@ -419,7 +419,7 @@ class ProductProvider with ChangeNotifier {
   List<Product> getProductsBySeller(String sellerId) => _products.where((p) => p.sellerId == sellerId).toList();
   Future<void> addProduct(Product product) async { await DatabaseService().saveProduct(product); _products.insert(0, product); notifyListeners(); }
   Future<void> updateProduct(Product product) async { await DatabaseService().saveProduct(product); final i = _products.indexWhere((p) => p.id == product.id); if (i != -1) { _products[i] = product; notifyListeners(); } }
-  void deleteProduct(String id) { _products.removeWhere((p) => p.id == id); notifyListeners(); }
+  Future<void> deleteProduct(String id) async { await DatabaseService().deleteProduct(id); _products.removeWhere((p) => p.id == id); notifyListeners(); }
 }
 
 class CartProvider with ChangeNotifier {

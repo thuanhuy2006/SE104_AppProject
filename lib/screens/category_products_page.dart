@@ -15,9 +15,9 @@ class CategoryProductsPage extends StatelessWidget {
         .where((p) => p.category == categoryName)
         .toList();
     return Scaffold(
-      backgroundColor: etsyBackground,
+      backgroundColor: eraBackground,
       appBar: AppBar(
-        backgroundColor: etsyBackground,
+        backgroundColor: eraBackground,
         elevation: 0,
         title: Text(categoryName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         leading: IconButton(
@@ -27,7 +27,7 @@ class CategoryProductsPage extends StatelessWidget {
       ),
       body: Column(
         children: [
-          const EtsyHeader(), // Giữ Header để người dùng có thể tìm kiếm hoặc vào User Menu
+          const EraHeader(), // Giữ Header để người dùng có thể tìm kiếm hoặc vào User Menu
           Expanded(
             child: filteredProducts.isEmpty
                 ? const Center(child: Text("Chưa có sản phẩm nào trong danh mục này.", style: TextStyle(color: Colors.grey)))
@@ -41,7 +41,7 @@ class CategoryProductsPage extends StatelessWidget {
                     ),
                     itemCount: filteredProducts.length,
                     itemBuilder: (context, index) {
-                      return EtsyProductCard(product: filteredProducts[index]);
+                      return EraProductCard(product: filteredProducts[index]);
                     },
                   ),
           ),

@@ -51,9 +51,9 @@ class SellerOrdersScreen extends StatelessWidget {
     return DefaultTabController(
       length: 4,
       child: Scaffold(
-        backgroundColor: etsyBackground,
+        backgroundColor: eraBackground,
         appBar: AppBar(
-          backgroundColor: etsyBackground,
+          backgroundColor: eraBackground,
           elevation: 0,
           title: const Text("Quản lý đơn hàng", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           leading: IconButton(
@@ -119,7 +119,7 @@ class SellerOrdersScreen extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 20),
           padding: const EdgeInsets.all(15),
           decoration: BoxDecoration(
-            color: etsyCardColor,
+            color: eraCardColor,
             borderRadius: BorderRadius.circular(15),
             border: Border.all(color: Colors.grey.shade800),
           ),
@@ -187,7 +187,7 @@ class SellerOrdersScreen extends StatelessWidget {
                 children: [
                   const Text("Tổng doanh thu:", style: TextStyle(color: Colors.white, fontSize: 14)),
                   Text(formatCurrency.format(order.totalAmount),
-                      style: const TextStyle(color: etsyGreen, fontSize: 16, fontWeight: FontWeight.bold)),
+                      style: const TextStyle(color: eraGreen, fontSize: 16, fontWeight: FontWeight.bold)),
                 ],
               ),
 
@@ -368,7 +368,7 @@ class SellerOrdersScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: etsyCardColor,
+        backgroundColor: eraCardColor,
         title: Text(approve ? "Xác nhận đồng ý đổi trả" : "Xác nhận từ chối đổi trả", style: const TextStyle(color: Colors.white)),
         content: Text(
           approve

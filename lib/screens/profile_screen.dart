@@ -13,9 +13,9 @@ class ProfileScreen extends StatelessWidget {
     final user = userProvider.currentUser;
 
     return Scaffold(
-      backgroundColor: etsyBackground,
+      backgroundColor: eraBackground,
       appBar: AppBar(
-        backgroundColor: etsyBackground,
+        backgroundColor: eraBackground,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
@@ -40,7 +40,7 @@ class ProfileScreen extends StatelessWidget {
             const SizedBox(height: 10),
             Container(
               decoration: BoxDecoration(
-                color: etsyCardColor,
+                color: eraCardColor,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
@@ -77,7 +77,7 @@ class ProfileScreen extends StatelessWidget {
             const SizedBox(height: 10),
             Container(
               decoration: BoxDecoration(
-                color: etsyCardColor,
+                color: eraCardColor,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: _buildProfileRow(

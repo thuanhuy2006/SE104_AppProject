@@ -43,7 +43,7 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Đăng ký'), backgroundColor: etsyBackground),
+      appBar: AppBar(title: const Text('Đăng ký'), backgroundColor: eraBackground),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(20.0),

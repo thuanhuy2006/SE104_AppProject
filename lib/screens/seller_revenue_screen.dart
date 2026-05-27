@@ -151,9 +151,9 @@ class _SellerRevenueScreenState extends State<SellerRevenueScreen> with SingleTi
       });
 
     return Scaffold(
-      backgroundColor: etsyBackground,
+      backgroundColor: eraBackground,
       appBar: AppBar(
-        backgroundColor: etsyBackground,
+        backgroundColor: eraBackground,
         elevation: 0,
         title: const Text(
           "Báo Cáo Doanh Thu",
@@ -169,8 +169,8 @@ class _SellerRevenueScreenState extends State<SellerRevenueScreen> with SingleTi
           await userProvider.refreshOrders();
           await productProvider.refreshProducts();
         },
-        color: etsyOrange,
-        backgroundColor: etsyCardColor,
+        color: eraOrange,
+        backgroundColor: eraCardColor,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
@@ -208,7 +208,7 @@ class _SellerRevenueScreenState extends State<SellerRevenueScreen> with SingleTi
     return Container(
       padding: const EdgeInsets.all(4.0),
       decoration: BoxDecoration(
-        color: etsyCardColor,
+        color: eraCardColor,
         borderRadius: BorderRadius.circular(12.0),
         border: Border.all(color: Colors.grey.shade800),
       ),
@@ -237,7 +237,7 @@ class _SellerRevenueScreenState extends State<SellerRevenueScreen> with SingleTi
           duration: const Duration(milliseconds: 250),
           padding: const EdgeInsets.symmetric(vertical: 10.0),
           decoration: BoxDecoration(
-            color: isSelected ? etsyOrange : Colors.transparent,
+            color: isSelected ? eraOrange : Colors.transparent,
             borderRadius: BorderRadius.circular(8.0),
           ),
           alignment: Alignment.center,
@@ -262,7 +262,7 @@ class _SellerRevenueScreenState extends State<SellerRevenueScreen> with SingleTi
     return Container(
       padding: const EdgeInsets.all(18.0),
       decoration: BoxDecoration(
-        color: etsyCardColor,
+        color: eraCardColor,
         borderRadius: BorderRadius.circular(16.0),
         border: Border.all(color: Colors.grey.shade800),
         boxShadow: [
@@ -295,7 +295,7 @@ class _SellerRevenueScreenState extends State<SellerRevenueScreen> with SingleTi
             preTax: actualPre,
             tax: actualTax,
             postTax: actualPost,
-            accentColor: etsyGreen,
+            accentColor: eraGreen,
             isCompletedOnly: true,
           ),
 
@@ -386,8 +386,8 @@ class _SellerRevenueScreenState extends State<SellerRevenueScreen> with SingleTi
       child: DropdownButtonHideUnderline(
         child: DropdownButton<double>(
           value: _taxRate,
-          dropdownColor: etsyCardColor,
-          icon: const Icon(Icons.arrow_drop_down, color: etsyOrange, size: 18),
+          dropdownColor: eraCardColor,
+          icon: const Icon(Icons.arrow_drop_down, color: eraOrange, size: 18),
           style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
           onChanged: (double? newValue) {
             if (newValue != null) {
@@ -418,7 +418,7 @@ class _SellerRevenueScreenState extends State<SellerRevenueScreen> with SingleTi
       width: double.infinity,
       padding: const EdgeInsets.all(18.0),
       decoration: BoxDecoration(
-        color: etsyCardColor,
+        color: eraCardColor,
         borderRadius: BorderRadius.circular(16.0),
         border: Border.all(color: Colors.grey.shade800),
       ),
@@ -457,13 +457,13 @@ class _SellerRevenueScreenState extends State<SellerRevenueScreen> with SingleTi
                   ? Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                       decoration: BoxDecoration(
-                        color: etsyOrange.withOpacity(0.15),
+                        color: eraOrange.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: etsyOrange.withOpacity(0.5)),
+                        border: Border.all(color: eraOrange.withOpacity(0.5)),
                       ),
                       child: Text(
                         "${labels[_hoveredBarIndex!]}: ${formatCurrency.format(values[_hoveredBarIndex!])}",
-                        style: const TextStyle(color: etsyOrange, fontSize: 12, fontWeight: FontWeight.bold),
+                        style: const TextStyle(color: eraOrange, fontSize: 12, fontWeight: FontWeight.bold),
                       ),
                     )
                   : const Text("Chạm vào cột để xem chi tiết số tiền", style: TextStyle(color: Colors.grey, fontSize: 11)),
@@ -503,14 +503,14 @@ class _SellerRevenueScreenState extends State<SellerRevenueScreen> with SingleTi
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 colors: isHovered
-                                    ? [etsyOrange, Colors.orangeAccent]
-                                    : [etsyOrange.withOpacity(0.85), etsyOrange.withOpacity(0.4)],
+                                    ? [eraOrange, Colors.orangeAccent]
+                                    : [eraOrange.withOpacity(0.85), eraOrange.withOpacity(0.4)],
                                 begin: Alignment.topCenter,
                                 end: Alignment.bottomCenter,
                               ),
                               borderRadius: BorderRadius.circular(6),
                               boxShadow: isHovered
-                                  ? [BoxShadow(color: etsyOrange.withOpacity(0.4), blurRadius: 8, spreadRadius: 1)]
+                                  ? [BoxShadow(color: eraOrange.withOpacity(0.4), blurRadius: 8, spreadRadius: 1)]
                                   : [],
                             ),
                           ),
@@ -563,7 +563,7 @@ class _SellerRevenueScreenState extends State<SellerRevenueScreen> with SingleTi
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 30),
             decoration: BoxDecoration(
-              color: etsyCardColor,
+              color: eraCardColor,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: Colors.grey.shade800),
             ),
@@ -574,7 +574,7 @@ class _SellerRevenueScreenState extends State<SellerRevenueScreen> with SingleTi
         else
           Container(
             decoration: BoxDecoration(
-              color: etsyCardColor,
+              color: eraCardColor,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: Colors.grey.shade800),
             ),
@@ -642,7 +642,7 @@ class _SellerRevenueScreenState extends State<SellerRevenueScreen> with SingleTi
                       const SizedBox(height: 2),
                       Text(
                         formatCurrency.format(rev),
-                        style: const TextStyle(color: etsyGreen, fontSize: 13, fontWeight: FontWeight.bold),
+                        style: const TextStyle(color: eraGreen, fontSize: 13, fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
@@ -674,7 +674,7 @@ class _SellerRevenueScreenState extends State<SellerRevenueScreen> with SingleTi
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 30),
             decoration: BoxDecoration(
-              color: etsyCardColor,
+              color: eraCardColor,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: Colors.grey.shade800),
             ),
@@ -685,7 +685,7 @@ class _SellerRevenueScreenState extends State<SellerRevenueScreen> with SingleTi
         else
           Container(
             decoration: BoxDecoration(
-              color: etsyCardColor,
+              color: eraCardColor,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: Colors.grey.shade800),
             ),

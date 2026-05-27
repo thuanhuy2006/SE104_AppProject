@@ -9,8 +9,8 @@ import '../widgets/shared_widgets.dart';
 import 'product_detail_page.dart';
 import 'category_products_page.dart';
 
-class EtsyShopPage extends StatelessWidget {
-  const EtsyShopPage({super.key});
+class EraShopPage extends StatelessWidget {
+  const EraShopPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -30,10 +30,10 @@ class EtsyShopPage extends StatelessWidget {
     }).toList();
 
     return Scaffold(
-      backgroundColor: etsyBackground,
+      backgroundColor: eraBackground,
       body: Column(
         children: [
-          const EtsyHeader(),
+          const EraHeader(),
           Expanded(
             child: searchQuery.isNotEmpty
                 ? _buildSearchResults(filteredProducts)
@@ -95,7 +95,7 @@ class EtsyShopPage extends StatelessWidget {
           crossAxisCount: 2, childAspectRatio: 0.72, crossAxisSpacing: 15, mainAxisSpacing: 20
       ),
       itemCount: filteredProducts.length,
-      itemBuilder: (context, index) => EtsyProductCard(product: filteredProducts[index]),
+      itemBuilder: (context, index) => EraProductCard(product: filteredProducts[index]),
     );
   }
 
@@ -106,7 +106,7 @@ class EtsyShopPage extends StatelessWidget {
         width: (MediaQuery.of(context).size.width - 40) / 2,
         height: 60,
         decoration: BoxDecoration(
-            color: etsyCardColor,
+            color: eraCardColor,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: Colors.grey.shade800)
         ),

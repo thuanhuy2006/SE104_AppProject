@@ -20,9 +20,9 @@ class YouScreen extends StatelessWidget {
     final bool isLoggedIn = userProvider.isLoggedIn;
 
     return Scaffold(
-      backgroundColor: etsyBackground,
+      backgroundColor: eraBackground,
       appBar: AppBar(
-        backgroundColor: etsyBackground,
+        backgroundColor: eraBackground,
         elevation: 0,
         automaticallyImplyLeading: false,
         title: const Text(
@@ -108,7 +108,7 @@ class YouScreen extends StatelessWidget {
             const Icon(Icons.person_outline, size: 100, color: Colors.grey),
             const SizedBox(height: 20),
             const Text(
-              "Chào mừng bạn đến với Etsy!",
+              "Chào mừng bạn đến với Era!",
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
             ),
@@ -152,7 +152,7 @@ class YouScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: etsyCardColor,
+        backgroundColor: eraCardColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
         title: const Text(
           "Cấu hình ví SePay nhận tiền",

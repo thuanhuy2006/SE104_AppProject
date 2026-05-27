@@ -22,9 +22,9 @@ class SellerShopPage extends StatelessWidget {
         .toList();
 
     return Scaffold(
-      backgroundColor: etsyBackground,
+      backgroundColor: eraBackground,
       appBar: AppBar(
-        backgroundColor: etsyBackground,
+        backgroundColor: eraBackground,
         elevation: 0,
         title: Text(sellerName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         leading: IconButton(
@@ -75,7 +75,7 @@ class SellerShopPage extends StatelessWidget {
                     ),
                     itemCount: sellerProducts.length,
                     itemBuilder: (context, index) {
-                      return EtsyProductCard(product: sellerProducts[index]);
+                      return EraProductCard(product: sellerProducts[index]);
                     },
                   ),
           ),

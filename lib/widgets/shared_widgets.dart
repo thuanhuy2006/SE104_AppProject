@@ -13,13 +13,13 @@ import '../screens/settings_page.dart';
 import '../screens/profile_screen.dart';
 import '../screens/purchases_screen.dart';
 
-class EtsyHeader extends StatelessWidget {
-  const EtsyHeader({super.key});
+class EraHeader extends StatelessWidget {
+  const EraHeader({super.key});
 
   void _showUserMenu(BuildContext context, UserProvider userProvider) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: etsyCardColor,
+      backgroundColor: eraCardColor,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) {
         return SafeArea(
@@ -104,7 +104,7 @@ class EtsyHeader extends StatelessWidget {
               child: Container(
                 height: 45,
                 decoration: BoxDecoration(
-                    color: etsyCardColor,
+                    color: eraCardColor,
                     borderRadius: BorderRadius.circular(25),
                     border: Border.all(color: Colors.grey.shade700, width: 0.5)
                 ),
@@ -112,7 +112,7 @@ class EtsyHeader extends StatelessWidget {
                   controller: searchProvider.searchController,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    hintText: "Tìm kiếm trên Etsy",
+                    hintText: "Tìm kiếm trên Era",
                     hintStyle: const TextStyle(color: Colors.grey, fontSize: 15),
                     prefixIcon: const Icon(Icons.search, color: Colors.white, size: 22),
                     suffixIcon: searchProvider.query.isNotEmpty
@@ -129,7 +129,7 @@ class EtsyHeader extends StatelessWidget {
             // Icon Giỏ hàng (Chỉ hiển thị cho người mua)
             if (!userProvider.isSeller) ...[
               InkWell(
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const EtsyCartPage())),
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const EraCartPage())),
                 child: Stack(
                   clipBehavior: Clip.none,
                   children: [
@@ -177,9 +177,9 @@ class EtsyHeader extends StatelessWidget {
   }
 }
 
-class EtsyProductCard extends StatelessWidget {
+class EraProductCard extends StatelessWidget {
   final Product product;
-  const EtsyProductCard({super.key, required this.product});
+  const EraProductCard({super.key, required this.product});
 
   @override
   Widget build(BuildContext context) {
@@ -227,7 +227,7 @@ class EtsyProductCard extends StatelessWidget {
           Row(
             children: [
               if (product.oldPrice != null) ...[
-                Text(formatCurrency.format(product.price), style: const TextStyle(color: etsyGreen, fontWeight: FontWeight.bold, fontSize: 14)),
+                Text(formatCurrency.format(product.price), style: const TextStyle(color: eraGreen, fontWeight: FontWeight.bold, fontSize: 14)),
                 const SizedBox(width: 5),
                 Text(formatCurrency.format(product.oldPrice), style: const TextStyle(color: Colors.grey, fontSize: 12, decoration: TextDecoration.lineThrough)),
               ] else ...[
@@ -241,7 +241,7 @@ class EtsyProductCard extends StatelessWidget {
   }
 }
 
-class EtsyEmptyState extends StatelessWidget {
+class EraEmptyState extends StatelessWidget {
   final IconData? iconData;
   final Widget? customIcon;
   final String title;
@@ -249,7 +249,7 @@ class EtsyEmptyState extends StatelessWidget {
   final String? buttonText;
   final double iconSize;
 
-  const EtsyEmptyState({
+  const EraEmptyState({
     super.key, this.iconData, this.customIcon, required this.title, this.subtitle, this.buttonText, this.iconSize = 80,
   });
 

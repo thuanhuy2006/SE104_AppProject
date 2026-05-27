@@ -17,7 +17,7 @@ class ChatListPage extends StatelessWidget {
 
     if (currentUser == null) {
       return const Scaffold(
-        backgroundColor: etsyBackground,
+        backgroundColor: eraBackground,
         body: Center(
           child: Text(
             'Vui lòng đăng nhập',
@@ -30,7 +30,7 @@ class ChatListPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Tin nhắn'),
-        backgroundColor: etsyBackground,
+        backgroundColor: eraBackground,
         foregroundColor: Colors.white,
         leading: Navigator.canPop(context)
             ? IconButton(
@@ -39,7 +39,7 @@ class ChatListPage extends StatelessWidget {
               )
             : null,
       ),
-      backgroundColor: etsyBackground,
+      backgroundColor: eraBackground,
       body: StreamBuilder<QuerySnapshot>(
         stream: dbService.getChatRooms(currentUser.uid),
         builder: (context, snapshot) {

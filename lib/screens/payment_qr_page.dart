@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_providers.dart';
-import '../constants/app_colors.dart'; // Import màu Etsy của bạn
+import '../constants/app_colors.dart'; // Import màu Era của bạn
 
 class PaymentQRPage extends StatefulWidget {
   final String orderId;
@@ -88,9 +88,9 @@ class _PaymentQRPageState extends State<PaymentQRPage> {
     final String qrImageUrl = "https://qr.sepay.vn/img?acc=$_bankAccount&bank=$_bankName&amount=${widget.totalAmount.toInt()}&des=${Uri.encodeComponent(paymentContent)}";
 
     return Scaffold(
-      backgroundColor: etsyBackground,
+      backgroundColor: eraBackground,
       appBar: AppBar(
-        backgroundColor: etsyBackground,
+        backgroundColor: eraBackground,
         title: const Text("Thanh toán chuyển khoản", style: TextStyle(color: Colors.white)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
@@ -145,7 +145,7 @@ class _PaymentQRPageState extends State<PaymentQRPage> {
               Container(
                 padding: const EdgeInsets.all(15),
                 decoration: BoxDecoration(
-                  color: etsyCardColor,
+                  color: eraCardColor,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: Colors.grey.shade800),
                 ),

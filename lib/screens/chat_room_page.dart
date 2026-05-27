@@ -52,10 +52,10 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.receiverName),
-        backgroundColor: etsyBackground,
+        backgroundColor: eraBackground,
         foregroundColor: Colors.white,
       ),
-      backgroundColor: etsyBackground,
+      backgroundColor: eraBackground,
       body: Column(
         children: [
           Expanded(
@@ -131,7 +131,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                   ? MediaQuery.of(context).padding.bottom + 8.0
                   : 8.0,
             ),
-            color: etsyCardColor,
+            color: eraCardColor,
             child: Row(
               children: [
                 Expanded(

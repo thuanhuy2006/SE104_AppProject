@@ -7,8 +7,8 @@ import '../providers/app_providers.dart';
 import '../widgets/shared_widgets.dart';
 import 'checkout_page.dart';
 
-class EtsyCartPage extends StatelessWidget {
-  const EtsyCartPage({super.key});
+class EraCartPage extends StatelessWidget {
+  const EraCartPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -21,19 +21,19 @@ class EtsyCartPage extends StatelessWidget {
     );
 
     return Scaffold(
-      backgroundColor: etsyBackground,
+      backgroundColor: eraBackground,
       appBar: AppBar(
-        backgroundColor: etsyBackground,
-        foregroundColor: etsyText,
+        backgroundColor: eraBackground,
+        foregroundColor: eraText,
         elevation: 0,
         title: Text(
           "Giỏ hàng (${cart.itemCount})",
-          style: const TextStyle(fontWeight: FontWeight.bold, color: etsyText),
+          style: const TextStyle(fontWeight: FontWeight.bold, color: eraText),
         ),
       ),
       body: cart.items.isEmpty
           ? const SafeArea(
-              child: EtsyEmptyState(
+              child: EraEmptyState(
                 iconData: Icons.shopping_cart_outlined,
                 title: "Giỏ hàng của bạn đang trống",
                 subtitle: "Bạn đang tìm kiếm ý tưởng mua sắm?",
@@ -55,7 +55,7 @@ class EtsyCartPage extends StatelessWidget {
                       const Text(
                         "Chọn tất cả",
                         style: TextStyle(
-                          color: etsyText,
+                          color: eraText,
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
                         ),
@@ -70,7 +70,7 @@ class EtsyCartPage extends StatelessWidget {
                     itemBuilder: (context, i) {
                       final cartItem = cart.items.values.toList()[i];
                       return Card(
-                        color: etsyCardColor,
+                        color: eraCardColor,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           side: BorderSide(
@@ -120,7 +120,7 @@ class EtsyCartPage extends StatelessWidget {
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(
-                                        color: etsyText,
+                                        color: eraText,
                                         fontSize: 15,
                                         fontWeight: FontWeight.w500,
                                       ),
@@ -129,7 +129,7 @@ class EtsyCartPage extends StatelessWidget {
                                     Text(
                                       formatCurrency.format(cartItem.price),
                                       style: const TextStyle(
-                                        color: etsyText,
+                                        color: eraText,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
@@ -149,7 +149,7 @@ class EtsyCartPage extends StatelessWidget {
                                           child: Text(
                                             '${cartItem.quantity}',
                                             style: const TextStyle(
-                                              color: etsyText,
+                                              color: eraText,
                                               fontSize: 16,
                                               fontWeight: FontWeight.bold,
                                             ),
@@ -192,7 +192,7 @@ class EtsyCartPage extends StatelessWidget {
                     bottom: MediaQuery.of(context).padding.bottom + 20,
                   ),
                   decoration: BoxDecoration(
-                    color: etsyCardColor,
+                    color: eraCardColor,
                     border: Border(
                       top: BorderSide(color: Colors.grey.shade800, width: 1),
                     ),
@@ -205,12 +205,12 @@ class EtsyCartPage extends StatelessWidget {
                         children: [
                           const Text(
                             "Tổng thanh toán:",
-                            style: TextStyle(color: etsyText, fontSize: 16),
+                            style: TextStyle(color: eraText, fontSize: 16),
                           ),
                           Text(
                             formatCurrency.format(cart.selectedTotalAmount),
                             style: const TextStyle(
-                              color: etsyText,
+                              color: eraText,
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
                             ),
