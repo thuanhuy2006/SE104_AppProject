@@ -10,6 +10,7 @@ import 'purchases_screen.dart';
 import 'chat_list_page.dart';
 import 'seller_orders_screen.dart';
 import 'seller_revenue_screen.dart';
+import 'buyer_vouchers_page.dart';
 
 class YouScreen extends StatelessWidget {
   const YouScreen({super.key});
@@ -74,6 +75,10 @@ class YouScreen extends StatelessWidget {
             if (!userProvider.isSeller) ...[
               _buildMenuItem("Đơn mua", context, () {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const PurchasesScreen()));
+              }),
+              _buildDivider(),
+              _buildMenuItem("Voucher của tôi", context, () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const BuyerVouchersPage()));
               }),
               _buildDivider(),
             ],

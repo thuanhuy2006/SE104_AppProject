@@ -387,6 +387,16 @@ class UserProvider with ChangeNotifier {
     _role = _role == UserRole.buyer ? UserRole.seller : UserRole.buyer;
     notifyListeners();
   }
+
+  Future<void> reloadUser() async {
+    if (_currentUser != null) {
+      UserModel? fetchedUser = await DatabaseService().getUser(_currentUser!.uid);
+      if (fetchedUser != null) {
+        _currentUser = fetchedUser;
+        notifyListeners();
+      }
+    }
+  }
 }
 
 class ProductProvider with ChangeNotifier {
@@ -463,4 +473,60 @@ class SearchProvider with ChangeNotifier {
   SearchProvider() { searchController.addListener(() => notifyListeners()); }
   void clearSearch() { searchController.clear(); FocusManager.instance.primaryFocus?.unfocus(); }
   @override void dispose() { searchController.dispose(); super.dispose(); }
+}
+
+class VoucherProvider with ChangeNotifier {
+  List<Voucher> _sellerVouchers = [];
+  List<Voucher> _buyerVouchers = [];
+  bool _isLoading = false;
+
+  List<Voucher> get sellerVouchers => _sellerVouchers;
+  List<Voucher> get buyerVouchers => _buyerVouchers;
+  bool get isLoading => _isLoading;
+
+  Future<void> fetchSellerVouchers(String sellerId) async {
+    _isLoading = true;
+    notifyListeners();
+    _sellerVouchers = await DatabaseService().getSellerVouchers(sellerId);
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> fetchBuyerVouchers(List<String> codes) async {
+    _isLoading = true;
+    notifyListeners();
+    _buyerVouchers = await DatabaseService().getBuyerVouchers(codes);
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> saveVoucher(Voucher voucher) async {
+    await DatabaseService().saveVoucher(voucher);
+    final index = _sellerVouchers.indexWhere((v) => v.code == voucher.code);
+    if (index != -1) {
+      _sellerVouchers[index] = voucher;
+    } else {
+      _sellerVouchers.insert(0, voucher);
+    }
+    notifyListeners();
+  }
+
+  Future<void> deleteVoucher(String code) async {
+    await DatabaseService().deleteVoucher(code);
+    _sellerVouchers.removeWhere((v) => v.code == code);
+    notifyListeners();
+  }
+
+  Future<bool> claimVoucher(String buyerId, String code, UserProvider userProvider) async {
+    bool success = await DatabaseService().claimVoucher(buyerId, code);
+    if (success) {
+      await userProvider.reloadUser();
+      // Reload buyer vouchers list
+      final user = userProvider.currentUser;
+      if (user is BuyerModel) {
+        await fetchBuyerVouchers(user.discountCodes);
+      }
+    }
+    return success;
+  }
 }

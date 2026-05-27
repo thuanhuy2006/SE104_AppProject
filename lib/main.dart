@@ -29,6 +29,7 @@ class EraCloneApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CartProvider()),
         ChangeNotifierProvider(create: (_) => FavoriteProvider()),
         ChangeNotifierProvider(create: (_) => SearchProvider()),
+        ChangeNotifierProvider(create: (_) => VoucherProvider()),
         // Đã xóa AddressProvider dư thừa ở đây!
       ],
       child: MaterialApp(

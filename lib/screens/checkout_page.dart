@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../providers/app_providers.dart';
 import '../constants/app_colors.dart';
+import '../models/app_models.dart';
 import '../services/database.dart';
 import 'payment_qr_page.dart';
 
@@ -19,8 +20,29 @@ class _CheckoutPageState extends State<CheckoutPage> {
   String? _customAddress;
 
   String _paymentMethod = "Thanh toán khi nhận hàng (COD)";
-  double _discountAmount = 0.0;
-  String? _discountCode;
+  Voucher? _appliedVoucher;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final user = userProvider.currentUser;
+      if (user is BuyerModel) {
+        Provider.of<VoucherProvider>(context, listen: false).fetchBuyerVouchers(user.discountCodes);
+      }
+    });
+  }
+
+  double _calculateDiscount(Voucher voucher, List<CartItem> selectedItems) {
+    double subtotal = selectedItems
+        .where((item) => item.sellerId == voucher.sellerId && voucher.applicableCategories.contains(item.category))
+        .fold(0.0, (sum, item) => sum + (item.price * item.quantity));
+    if (subtotal >= voucher.minSpend) {
+      return subtotal * (voucher.discountPercent / 100);
+    }
+    return 0.0;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +59,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
     final displayAddress =
         _customAddress ?? user?.deliveryAddress ?? "Việt Nam";
 
-    double finalTotal = cart.selectedTotalAmount - _discountAmount;
+    double discount = _appliedVoucher != null ? _calculateDiscount(_appliedVoucher!, selectedItems) : 0.0;
+    double finalTotal = cart.selectedTotalAmount - discount;
     if (finalTotal < 0) finalTotal = 0;
 
     final formatCurrency = NumberFormat.currency(
@@ -204,9 +227,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
                       color: Colors.deepOrange,
                     ),
                     title: Text(
-                      _discountCode ?? "Chọn hoặc nhập mã giảm giá",
+                      _appliedVoucher != null
+                          ? "${_appliedVoucher!.code} (-${formatCurrency.format(discount)})"
+                          : "Chọn hoặc nhập mã giảm giá",
                       style: TextStyle(
-                        color: _discountCode != null
+                        color: _appliedVoucher != null
                             ? Colors.white
                             : Colors.grey,
                         fontSize: 14,
@@ -217,7 +242,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                       color: Colors.grey,
                       size: 16,
                     ),
-                    onTap: () => _showPromoCodeSheet(cart.selectedTotalAmount),
+                    onTap: () => _showPromoCodeSheet(selectedItems),
                   ),
                 ),
 
@@ -335,10 +360,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
                         formatCurrency,
                         isFree: true,
                       ),
-                      if (_discountAmount > 0)
+                      if (discount > 0)
                         _buildPriceRow(
                           "Giảm giá",
-                          -_discountAmount,
+                          -discount,
                           formatCurrency,
                           isDiscount: true,
                         ),
@@ -395,6 +420,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     // 2. Tạo đơn hàng trên Hệ thống
                     final orderId =
                         await userProvider.addOrder(selectedItems, finalTotal);
+
+                    // Xóa voucher đã áp dụng khỏi danh sách của người mua
+                    if (_appliedVoucher != null && user != null) {
+                      await DatabaseService().removeBuyerVoucher(user.uid, _appliedVoucher!.code);
+                      await userProvider.reloadUser();
+                    }
 
                     // Đóng dialog loading
                     if (mounted) Navigator.pop(context);
@@ -589,104 +620,162 @@ class _CheckoutPageState extends State<CheckoutPage> {
     );
   }
 
-  void _showPromoCodeSheet(double totalAmount) {
+  void _showPromoCodeSheet(List<CartItem> selectedItems) {
+    final formatCurrency = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ', decimalDigits: 0);
+    final voucherProvider = Provider.of<VoucherProvider>(context, listen: false);
+    final vouchers = voucherProvider.buyerVouchers;
+
     showModalBottomSheet(
       context: context,
-      backgroundColor: eraCardColor,
+      backgroundColor: eraBackground,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  "Chọn mã giảm giá",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                ListTile(
-                  title: const Text(
-                    "Giảm 10% (Tối đa 50k)",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  subtitle: const Text("Áp dụng cho mọi đơn hàng"),
-                  trailing: ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        _discountCode = "GIAM10";
-                        double discount = totalAmount * 0.1;
-                        _discountAmount = discount > 50000 ? 50000 : discount;
-                      });
-                      Navigator.pop(ctx);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepOrange,
+        return DraggableScrollableSheet(
+          initialChildSize: 0.6,
+          minChildSize: 0.4,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (_, scrollController) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 15),
+                child: Column(
+                  children: [
+                    const Text(
+                      "Chọn mã giảm giá",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    child: const Text(
-                      "Áp dụng",
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
+                    const SizedBox(height: 15),
+                    if (vouchers.isEmpty)
+                      const Expanded(
+                        child: Center(
+                          child: Text("Bạn chưa lưu voucher nào phù hợp", style: TextStyle(color: Colors.grey)),
+                        ),
+                      )
+                    else
+                      Expanded(
+                        child: ListView.separated(
+                          controller: scrollController,
+                          itemCount: vouchers.length + 1, // +1 for "Xóa mã giảm giá"
+                          separatorBuilder: (_, __) => const SizedBox(height: 12),
+                          itemBuilder: (context, index) {
+                            if (index == vouchers.length) {
+                              return ListTile(
+                                tileColor: eraCardColor,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                title: const Text(
+                                  "Không sử dụng Voucher",
+                                  style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
+                                ),
+                                leading: const Icon(
+                                  Icons.remove_circle_outline,
+                                  color: Colors.redAccent,
+                                ),
+                                onTap: () {
+                                  setState(() {
+                                    _appliedVoucher = null;
+                                  });
+                                  Navigator.pop(ctx);
+                                },
+                              );
+                            }
+
+                            final voucher = vouchers[index];
+                            double subtotal = selectedItems
+                                .where((item) => item.sellerId == voucher.sellerId && voucher.applicableCategories.contains(item.category))
+                                .fold(0.0, (sum, item) => sum + (item.price * item.quantity));
+
+                            bool isApplicable = subtotal >= voucher.minSpend;
+
+                            return Container(
+                              decoration: BoxDecoration(
+                                color: eraCardColor,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: _appliedVoucher?.code == voucher.code
+                                      ? Colors.amber.shade700
+                                      : Colors.grey.shade800,
+                                  width: _appliedVoucher?.code == voucher.code ? 1.5 : 1.0,
+                                ),
+                              ),
+                              child: ListTile(
+                                leading: Icon(
+                                  Icons.local_offer,
+                                  color: isApplicable ? Colors.amber : Colors.grey,
+                                ),
+                                title: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      voucher.code,
+                                      style: TextStyle(
+                                        color: isApplicable ? Colors.white : Colors.grey,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Text(
+                                      "Shop: ${voucher.sellerName}",
+                                      style: const TextStyle(color: Colors.grey, fontSize: 11, fontStyle: FontStyle.italic),
+                                    ),
+                                  ],
+                                ),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const SizedBox(height: 5),
+                                    Text(
+                                      "Giảm ${voucher.discountPercent.toInt()}% cho đơn từ ${formatCurrency.format(voucher.minSpend)}",
+                                      style: TextStyle(color: isApplicable ? Colors.white70 : Colors.grey.shade600, fontSize: 12),
+                                    ),
+                                    Text(
+                                      "Danh mục: ${voucher.applicableCategories.join(', ')}",
+                                      style: TextStyle(color: isApplicable ? Colors.grey : Colors.grey.shade700, fontSize: 11),
+                                    ),
+                                    if (!isApplicable) ...[
+                                      const SizedBox(height: 5),
+                                      Text(
+                                        subtotal == 0
+                                            ? "Không có sản phẩm của shop này thuộc danh mục áp dụng"
+                                            : "Cần mua thêm ${formatCurrency.format(voucher.minSpend - subtotal)} sản phẩm cùng danh mục của shop để áp dụng",
+                                        style: const TextStyle(color: Colors.redAccent, fontSize: 11),
+                                      ),
+                                    ]
+                                  ],
+                                ),
+                                trailing: isApplicable
+                                    ? ElevatedButton(
+                                        onPressed: () {
+                                          setState(() {
+                                            _appliedVoucher = voucher;
+                                          });
+                                          Navigator.pop(ctx);
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.amber.shade700,
+                                        ),
+                                        child: const Text(
+                                          "Chọn",
+                                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                        ),
+                                      )
+                                    : null,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                  ],
                 ),
-                ListTile(
-                  title: const Text(
-                    "Giảm 30.000đ",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  subtitle: const Text("Cho đơn hàng từ 150k"),
-                  trailing: ElevatedButton(
-                    onPressed: () {
-                      if (totalAmount >= 150000) {
-                        setState(() {
-                          _discountCode = "GIAM30K";
-                          _discountAmount = 30000;
-                        });
-                        Navigator.pop(ctx);
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Đơn hàng chưa đủ điều kiện!"),
-                          ),
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepOrange,
-                    ),
-                    child: const Text(
-                      "Áp dụng",
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ),
-                ListTile(
-                  title: const Text(
-                    "Xóa mã giảm giá",
-                    style: TextStyle(color: Colors.redAccent),
-                  ),
-                  leading: const Icon(
-                    Icons.remove_circle_outline,
-                    color: Colors.redAccent,
-                  ),
-                  onTap: () {
-                    setState(() {
-                      _discountCode = null;
-                      _discountAmount = 0.0;
-                    });
-                    Navigator.pop(ctx);
-                  },
-                ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );

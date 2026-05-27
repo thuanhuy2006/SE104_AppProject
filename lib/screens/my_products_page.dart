@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../constants/app_colors.dart';
 import '../providers/app_providers.dart';
 import 'add_product_page.dart';
+import 'seller_vouchers_page.dart';
 
 class MyProductsPage extends StatelessWidget {
   const MyProductsPage({super.key});
@@ -90,10 +91,25 @@ class MyProductsPage extends StatelessWidget {
                 );
               },
             ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AddProductPage())),
-        backgroundColor: Colors.deepOrange,
-        child: const Icon(Icons.add, color: Colors.white),
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            heroTag: 'manage_vouchers_fab',
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const SellerVouchersPage()));
+            },
+            backgroundColor: Colors.amber.shade700,
+            child: const Icon(Icons.local_offer, color: Colors.white),
+          ),
+          const SizedBox(height: 15),
+          FloatingActionButton(
+            heroTag: 'add_product_fab',
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AddProductPage())),
+            backgroundColor: Colors.deepOrange,
+            child: const Icon(Icons.add, color: Colors.white),
+          ),
+        ],
       ),
     );
   }

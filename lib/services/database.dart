@@ -469,4 +469,81 @@ class DatabaseService {
     users.sort();
     return users.join('_');
   }
+
+  // VOUCHER MANAGEMENT
+  Future<void> saveVoucher(Voucher voucher) async {
+    await _db.collection('vouchers').doc(voucher.code).set(voucher.toMap(), SetOptions(merge: true));
+  }
+
+  Future<void> deleteVoucher(String code) async {
+    await _db.collection('vouchers').doc(code).delete();
+  }
+
+  Future<Voucher?> getVoucher(String code) async {
+    try {
+      DocumentSnapshot doc = await _db.collection('vouchers').doc(code).get();
+      if (doc.exists) {
+        return Voucher.fromMap(doc.data() as Map<String, dynamic>);
+      }
+      return null;
+    } catch (e) {
+      print('Error getting voucher: $e');
+      return null;
+    }
+  }
+
+  Future<List<Voucher>> getSellerVouchers(String sellerId) async {
+    try {
+      QuerySnapshot snapshot = await _db.collection('vouchers')
+          .where('sellerId', isEqualTo: sellerId)
+          .get();
+      return snapshot.docs.map((doc) => Voucher.fromMap(doc.data() as Map<String, dynamic>)).toList();
+    } catch (e) {
+      print('Error getting seller vouchers: $e');
+      return [];
+    }
+  }
+
+  Future<List<Voucher>> getBuyerVouchers(List<String> codes) async {
+    if (codes.isEmpty) return [];
+    try {
+      // Firebase limit of 10 items in where-in. We can batch or just query in chunks, or simply check individually.
+      // Since a buyer won't have too many codes, we can do multiple queries or a where-in in chunks if codes > 10.
+      List<Voucher> list = [];
+      for (var code in codes) {
+        Voucher? v = await getVoucher(code);
+        if (v != null) list.add(v);
+      }
+      return list;
+    } catch (e) {
+      print('Error getting buyer vouchers: $e');
+      return [];
+    }
+  }
+
+  Future<bool> claimVoucher(String buyerId, String code) async {
+    try {
+      Voucher? v = await getVoucher(code);
+      if (v == null) return false;
+
+      // Add to user's discountCodes array
+      await _db.collection('users').doc(buyerId).update({
+        'discountCodes': FieldValue.arrayUnion([code]),
+      });
+      return true;
+    } catch (e) {
+      print('Error claiming voucher: $e');
+      return false;
+    }
+  }
+
+  Future<void> removeBuyerVoucher(String buyerId, String code) async {
+    try {
+      await _db.collection('users').doc(buyerId).update({
+        'discountCodes': FieldValue.arrayRemove([code]),
+      });
+    } catch (e) {
+      print('Error removing buyer voucher: $e');
+    }
+  }
 }

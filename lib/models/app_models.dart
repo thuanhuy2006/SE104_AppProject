@@ -239,3 +239,43 @@ class SavedAddress {
 class ProductData {
   static final List<Product> products = [];
 }
+
+class Voucher {
+  final String code; // Mã voucher, ví dụ: "ERA20"
+  final String sellerId; // ID người bán tạo ra
+  final String sellerName; // Tên shop người bán
+  final double minSpend; // Chi tiêu tối thiểu, ví dụ: 1000000.0
+  final double discountPercent; // % giảm giá, ví dụ: 20.0
+  final List<String> applicableCategories; // Các danh mục áp dụng: ['Quần áo', 'Giày dép'...]
+
+  Voucher({
+    required this.code,
+    required this.sellerId,
+    required this.sellerName,
+    required this.minSpend,
+    required this.discountPercent,
+    required this.applicableCategories,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'code': code,
+      'sellerId': sellerId,
+      'sellerName': sellerName,
+      'minSpend': minSpend,
+      'discountPercent': discountPercent,
+      'applicableCategories': applicableCategories,
+    };
+  }
+
+  factory Voucher.fromMap(Map<String, dynamic> map) {
+    return Voucher(
+      code: map['code'] ?? '',
+      sellerId: map['sellerId'] ?? '',
+      sellerName: map['sellerName'] ?? '',
+      minSpend: (map['minSpend'] ?? 0.0).toDouble(),
+      discountPercent: (map['discountPercent'] ?? 0.0).toDouble(),
+      applicableCategories: List<String>.from(map['applicableCategories'] ?? []),
+    );
+  }
+}
