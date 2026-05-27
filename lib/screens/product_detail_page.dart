@@ -346,10 +346,23 @@ class ProductDetailPage extends StatelessWidget {
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () {
-                          final cart = Provider.of<CartProvider>(context, listen: false);
-                          cart.addItem(product);
-                          Provider.of<UserProvider>(context, listen: false).syncCartToFirebase(cart.items.values.toList());
-                          Navigator.push(context, MaterialPageRoute(builder: (_) => const CheckoutPage()));
+                          final cartItem = CartItem(
+                            id: product.id,
+                            title: product.title,
+                            price: product.price,
+                            imageUrl: product.imageUrl,
+                            sellerId: product.sellerId,
+                            sellerName: product.sellerName,
+                            category: product.category,
+                            quantity: 1,
+                            isSelected: true,
+                          );
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => CheckoutPage(checkoutItems: [cartItem]),
+                            ),
+                          );
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,

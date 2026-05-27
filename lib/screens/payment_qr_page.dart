@@ -4,12 +4,14 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_providers.dart';
 import '../constants/app_colors.dart'; // Import màu Era của bạn
+import '../models/app_models.dart';
 
 class PaymentQRPage extends StatefulWidget {
   final String orderId;
   final double totalAmount;
   final String purchaserName;
   final String productSummary;
+  final List<CartItem>? purchasedItems;
 
   const PaymentQRPage({
     super.key,
@@ -17,6 +19,7 @@ class PaymentQRPage extends StatefulWidget {
     required this.totalAmount,
     required this.purchaserName,
     required this.productSummary,
+    this.purchasedItems,
   });
 
   @override
@@ -55,7 +58,11 @@ class _PaymentQRPageState extends State<PaymentQRPage> {
     final cart = Provider.of<CartProvider>(context, listen: false);
     final userProvider = Provider.of<UserProvider>(context, listen: false);
 
-    cart.clearSelectedCart();
+    if (widget.purchasedItems != null) {
+      cart.clearPurchasedItems(widget.purchasedItems!);
+    } else {
+      cart.clearSelectedCart();
+    }
     userProvider.syncCartToFirebase(cart.items.values.toList());
 
     Navigator.popUntil(context, (route) => route.isFirst);

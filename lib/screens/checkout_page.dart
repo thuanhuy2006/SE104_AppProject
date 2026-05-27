@@ -8,7 +8,8 @@ import '../services/database.dart';
 import 'payment_qr_page.dart';
 
 class CheckoutPage extends StatefulWidget {
-  const CheckoutPage({super.key});
+  final List<CartItem>? checkoutItems;
+  const CheckoutPage({super.key, this.checkoutItems});
 
   @override
   State<CheckoutPage> createState() => _CheckoutPageState();
@@ -21,10 +22,40 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
   String _paymentMethod = "Thanh toán khi nhận hàng (COD)";
   Voucher? _appliedVoucher;
+  List<CartItem> _checkoutItems = [];
 
   @override
   void initState() {
     super.initState();
+    final cart = Provider.of<CartProvider>(context, listen: false);
+    if (widget.checkoutItems != null) {
+      _checkoutItems = widget.checkoutItems!.map((item) => CartItem(
+        id: item.id,
+        title: item.title,
+        price: item.price,
+        imageUrl: item.imageUrl,
+        sellerId: item.sellerId,
+        sellerName: item.sellerName,
+        category: item.category,
+        quantity: item.quantity,
+        isSelected: item.isSelected,
+      )).toList();
+    } else {
+      _checkoutItems = cart.items.values
+          .where((item) => item.isSelected)
+          .map((item) => CartItem(
+        id: item.id,
+        title: item.title,
+        price: item.price,
+        imageUrl: item.imageUrl,
+        sellerId: item.sellerId,
+        sellerName: item.sellerName,
+        category: item.category,
+        quantity: item.quantity,
+        isSelected: item.isSelected,
+      )).toList();
+    }
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final userProvider = Provider.of<UserProvider>(context, listen: false);
       final user = userProvider.currentUser;
@@ -32,6 +63,28 @@ class _CheckoutPageState extends State<CheckoutPage> {
         Provider.of<VoucherProvider>(context, listen: false).fetchBuyerVouchers(user.discountCodes);
       }
     });
+  }
+
+  void _updateItemQuantity(CartItem item, int newQty) {
+    setState(() {
+      if (newQty <= 0) {
+        _checkoutItems.removeWhere((i) => i.id == item.id);
+        if (_checkoutItems.isEmpty) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Danh sách sản phẩm thanh toán trống!")),
+          );
+        }
+      } else {
+        item.quantity = newQty;
+      }
+    });
+
+    final cart = Provider.of<CartProvider>(context, listen: false);
+    if (cart.items.containsKey(item.id)) {
+      cart.updateQuantity(item.id, newQty);
+      Provider.of<UserProvider>(context, listen: false).syncCartToFirebase(cart.items.values.toList());
+    }
   }
 
   double _calculateDiscount(Voucher voucher, List<CartItem> selectedItems) {
@@ -49,18 +102,17 @@ class _CheckoutPageState extends State<CheckoutPage> {
     final userProvider = Provider.of<UserProvider>(context);
     final cart = Provider.of<CartProvider>(context);
     final user = userProvider.currentUser;
-    // Chỉ lấy ra các mặt hàng đã được đánh dấu chọn trong giỏ
-    final selectedItems = cart.items.values
-        .where((item) => item.isSelected)
-        .toList();
+    // Sử dụng danh sách local đã chọn
+    final selectedItems = _checkoutItems;
 
     final displayName = _customName ?? user?.name ?? "Người mua hàng";
     final displayPhone = _customPhone ?? user?.phoneNumber ?? "";
     final displayAddress =
         _customAddress ?? user?.deliveryAddress ?? "Việt Nam";
 
+    double itemsTotal = selectedItems.fold(0.0, (sum, item) => sum + (item.price * item.quantity));
     double discount = _appliedVoucher != null ? _calculateDiscount(_appliedVoucher!, selectedItems) : 0.0;
-    double finalTotal = cart.selectedTotalAmount - discount;
+    double finalTotal = itemsTotal - discount;
     if (finalTotal < 0) finalTotal = 0;
 
     final formatCurrency = NumberFormat.currency(
@@ -302,16 +354,48 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
-                                    Text(
-                                      "Số lượng: ${item.quantity}",
-                                      style: const TextStyle(
-                                        color: Colors.grey,
-                                        fontSize: 12,
-                                      ),
+                                    const SizedBox(height: 5),
+                                    Row(
+                                      children: [
+                                        InkWell(
+                                          onTap: () {
+                                            _updateItemQuantity(item, item.quantity - 1);
+                                          },
+                                          child: Container(
+                                            padding: const EdgeInsets.all(3),
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey[800],
+                                              borderRadius: BorderRadius.circular(4),
+                                            ),
+                                            child: const Icon(Icons.remove, size: 12, color: Colors.white),
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                                          child: Text(
+                                            '${item.quantity}',
+                                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                                          ),
+                                        ),
+                                        InkWell(
+                                          onTap: () {
+                                            _updateItemQuantity(item, item.quantity + 1);
+                                          },
+                                          child: Container(
+                                            padding: const EdgeInsets.all(3),
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey[800],
+                                              borderRadius: BorderRadius.circular(4),
+                                            ),
+                                            child: const Icon(Icons.add, size: 12, color: Colors.white),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
                               ),
+                              const SizedBox(width: 10),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
@@ -348,10 +432,31 @@ class _CheckoutPageState extends State<CheckoutPage> {
                           ),
                         ),
                       ),
-                      const Divider(color: Colors.grey, height: 30),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 30),
+                const Text(
+                  "TỔNG TIỀN THANH TOÁN",
+                  style: TextStyle(
+                    color: Colors.grey,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.all(15),
+                  decoration: BoxDecoration(
+                    color: eraCardColor,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    children: [
                       _buildPriceRow(
                         "Tạm tính",
-                        cart.selectedTotalAmount,
+                        itemsTotal,
                         formatCurrency,
                       ),
                       _buildPriceRow(
@@ -372,7 +477,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           const Text(
-                            "Tổng cộng",
+                            "Tổng thanh toán",
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 18,
@@ -449,13 +554,14 @@ class _CheckoutPageState extends State<CheckoutPage> {
                               totalAmount: finalTotal,
                               purchaserName: displayName,
                               productSummary: summary,
+                              purchasedItems: _checkoutItems,
                             ),
                           ),
                         );
                       }
                     } else {
-                      // Luồng đối với COD: Xóa giỏ hàng và về trang chủ
-                      cart.clearSelectedCart();
+                      // Luồng đối với COD: Xóa các sản phẩm đã mua khỏi giỏ hàng
+                      cart.clearPurchasedItems(_checkoutItems);
                       await userProvider
                           .syncCartToFirebase(cart.items.values.toList());
 
