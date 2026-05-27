@@ -33,7 +33,7 @@ class EtsyCloneApp extends StatelessWidget {
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        title: 'Esty Store',
+        title: 'Era Store',
         theme: ThemeData(
           brightness: Brightness.dark,
           scaffoldBackgroundColor: etsyBackground,

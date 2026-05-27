@@ -102,5 +102,5 @@ flutter:
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "asset/icon/Esty Store.png"
+  image_path: "asset/icon/Era Store.png"
   remove_alpha_ios: true

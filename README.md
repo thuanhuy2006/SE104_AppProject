@@ -1,4 +1,4 @@
-# 🛍️ Esty Store - Ứng dụng Quản lý & Mua bán đơn hàng trực tuyến
+# 🛍️ Era Store - Ứng dụng Quản lý & Mua bán đơn hàng trực tuyến
 
 > **Đồ án môn học:** Nhập môn Công nghệ Phần mềm (SE104)  
 > **Nền tảng phát triển:** Flutter & Firebase  
@@ -8,9 +8,9 @@
 
 ## 📌 Giới thiệu ứng dụng
 
-**Esty Store** là một ứng dụng di động thương mại điện tử hiện đại được xây dựng dựa trên nền tảng **Flutter** và **Firebase**. Lấy cảm hứng từ mô hình C2C (Customer-to-Customer) của Etsy, ứng dụng cho phép người dùng dễ dàng chuyển đổi linh hoạt giữa vai trò **Người mua (Buyer)** và **Người bán (Seller)**. 
+**Era Store** là một ứng dụng di động thương mại điện tử hiện đại được xây dựng dựa trên nền tảng **Flutter** và **Firebase**. Lấy cảm hứng từ mô hình C2C (Customer-to-Customer) của Etsy, ứng dụng cho phép người dùng dễ dàng chuyển đổi linh hoạt giữa vai trò **Người mua (Buyer)** và **Người bán (Seller)**. 
 
-Với giao diện tối sang trọng (Dark Theme) tối ưu hóa trải nghiệm người dùng, tích hợp các tính năng thông minh như Chat thời gian thực, Thanh toán tự động qua mã VietQR (SePay API), và quản lý trạng thái đơn hàng đa cấp, **Esty Store** mang lại giải pháp quản lý & mua bán hàng hóa toàn diện và mượt mà.
+Với giao diện tối sang trọng (Dark Theme) tối ưu hóa trải nghiệm người dùng, tích hợp các tính năng thông minh như Chat thời gian thực, Thanh toán tự động qua mã VietQR (SePay API), và quản lý trạng thái đơn hàng đa cấp, **Era Store** mang lại giải pháp quản lý & mua bán hàng hóa toàn diện và mượt mà.
 
 ---
 
@@ -160,4 +160,4 @@ flutter run
 ---
 
 ## 📞 Liên hệ hỗ trợ
-Mọi thắc mắc hoặc báo lỗi liên quan đến ứng dụng **Esty Store**, vui lòng tạo một Issue trên kho lưu trữ Github này hoặc liên hệ đại diện nhóm thực hiện đồ án SE104.
+Mọi thắc mắc hoặc báo lỗi liên quan đến ứng dụng **Era Store**, vui lòng tạo một Issue trên kho lưu trữ Github này hoặc liên hệ đại diện nhóm thực hiện đồ án SE104.
