@@ -1,7 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_providers.dart';
 import '../constants/app_colors.dart';
+import '../services/image_upload_service.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -14,6 +17,9 @@ class _SettingsPageState extends State<SettingsPage> {
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
   late TextEditingController _addressController;
+  File? _avatarImageFile;
+  String? _currentAvatarUrl;
+  bool _isSaving = false;
 
   @override
   void initState() {
@@ -22,6 +28,7 @@ class _SettingsPageState extends State<SettingsPage> {
     _nameController = TextEditingController(text: user?.name ?? "");
     _phoneController = TextEditingController(text: user?.phoneNumber ?? "0901234567");
     _addressController = TextEditingController(text: user?.deliveryAddress ?? "Việt Nam");
+    _currentAvatarUrl = user?.avatarUrl;
   }
 
   @override
@@ -32,7 +39,61 @@ class _SettingsPageState extends State<SettingsPage> {
     super.dispose();
   }
 
-  void _saveSettings() {
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(
+        source: source,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 85,
+      );
+      if (pickedFile != null) {
+        setState(() {
+          _avatarImageFile = File(pickedFile.path);
+        });
+      }
+    } catch (e) {
+      debugPrint("Lỗi chọn ảnh: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Không thể chọn ảnh: $e')),
+      );
+    }
+  }
+
+  void _showPickImageOptions() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: eraCardColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library, color: Colors.white),
+              title: const Text("Chọn từ Thư viện", style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.gallery);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: Colors.white),
+              title: const Text("Chụp ảnh mới", style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.camera);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _saveSettings() async {
     if (_nameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Tên không được để trống')),
@@ -40,20 +101,52 @@ class _SettingsPageState extends State<SettingsPage> {
       return;
     }
 
-    // Cập nhật vào Provider
-    Provider.of<UserProvider>(context, listen: false).updateUserInfo(
-      _nameController.text.trim(),
-      _phoneController.text.trim(),
-      _addressController.text.trim(),
-    );
+    setState(() {
+      _isSaving = true;
+    });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('✅ Đã lưu thay đổi thành công!'),
-        backgroundColor: Colors.green,
-      ),
-    );
-    Navigator.pop(context);
+    try {
+      String? uploadedUrl;
+      if (_avatarImageFile != null) {
+        uploadedUrl = await ImageUploadService.uploadImage(_avatarImageFile!);
+        if (uploadedUrl == null) {
+          throw Exception("Không nhận được liên kết ảnh từ Cloudinary.");
+        }
+      }
+
+      // Cập nhật vào Provider
+      await Provider.of<UserProvider>(context, listen: false).updateUserInfo(
+        _nameController.text.trim(),
+        _phoneController.text.trim(),
+        _addressController.text.trim(),
+        newAvatarUrl: uploadedUrl,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ Đã lưu thay đổi thành công!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Lỗi: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    }
   }
 
   @override
@@ -74,6 +167,44 @@ class _SettingsPageState extends State<SettingsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Widget chỉnh sửa ảnh đại diện
+            Center(
+              child: Stack(
+                children: [
+                  CircleAvatar(
+                    radius: 55,
+                    backgroundColor: Colors.grey[800],
+                    backgroundImage: _avatarImageFile != null
+                        ? FileImage(_avatarImageFile!)
+                        : (_currentAvatarUrl != null && _currentAvatarUrl!.isNotEmpty
+                            ? NetworkImage(_currentAvatarUrl!) as ImageProvider
+                            : null),
+                    child: (_avatarImageFile == null && (_currentAvatarUrl == null || _currentAvatarUrl!.isEmpty))
+                        ? Text(
+                            (_nameController.text.trim().isNotEmpty)
+                                ? _nameController.text.trim()[0].toUpperCase()
+                                : "U",
+                            style: const TextStyle(fontSize: 40, color: Colors.white, fontWeight: FontWeight.bold),
+                          )
+                        : null,
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: GestureDetector(
+                      onTap: _showPickImageOptions,
+                      child: const CircleAvatar(
+                        radius: 18,
+                        backgroundColor: Colors.white,
+                        child: Icon(Icons.camera_alt, color: Colors.black, size: 18),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 30),
+
             const Text("THÔNG TIN CỦA BẠN", style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.bold)),
             const SizedBox(height: 20),
             
@@ -97,14 +228,20 @@ class _SettingsPageState extends State<SettingsPage> {
               width: double.infinity,
               height: 55,
               child: ElevatedButton(
-                onPressed: _saveSettings,
+                onPressed: _isSaving ? null : _saveSettings,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
+                  backgroundColor: _isSaving ? Colors.grey : Colors.white,
                   foregroundColor: Colors.black,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                   elevation: 0,
                 ),
-                child: const Text("LƯU THAY ĐỔI", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                child: _isSaving
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2),
+                      )
+                    : const Text("LƯU THAY ĐỔI", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               ),
             ),
           ],

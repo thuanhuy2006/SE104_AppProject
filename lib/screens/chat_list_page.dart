@@ -86,12 +86,19 @@ class ChatListPage extends StatelessWidget {
               return FutureBuilder<UserModel?>(
                 future: dbService.getUser(otherUserId),
                 builder: (context, userSnapshot) {
-                  final otherUserName =
-                      userSnapshot.data?.name ?? 'Người dùng ($otherUserId)';
+                  final otherUser = userSnapshot.data;
+                  final avatarUrl = otherUser?.avatarUrl ?? '';
+                  final otherUserName = otherUser?.name ?? 'Người dùng ($otherUserId)';
                   return ListTile(
-                    leading: const CircleAvatar(
+                    leading: CircleAvatar(
                       backgroundColor: Colors.grey,
-                      child: Icon(Icons.person, color: Colors.white),
+                      backgroundImage: avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
+                      child: avatarUrl.isNotEmpty
+                          ? null
+                          : Text(
+                              otherUserName.isNotEmpty ? otherUserName[0].toUpperCase() : "?",
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                            ),
                     ),
                     title: Text(
                       otherUserName,

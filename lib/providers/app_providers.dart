@@ -300,9 +300,10 @@ class UserProvider with ChangeNotifier {
     await DatabaseService().updateOrderReview(orderId, reviewData);
   }
 
-  Future<void> updateUserInfo(String newName, String newPhone, String newAddress) async {
+  Future<void> updateUserInfo(String newName, String newPhone, String newAddress, {String? newAvatarUrl}) async {
     if (_currentUser == null) return;
     UserModel updatedUser;
+    final finalAvatarUrl = newAvatarUrl ?? _currentUser!.avatarUrl;
     if (_currentUser is BuyerModel) {
       updatedUser = BuyerModel(
         uid: _currentUser!.uid, email: _currentUser!.email, name: newName, password: _currentUser!.password,
@@ -310,6 +311,7 @@ class UserProvider with ChangeNotifier {
         purchaseHistory: (_currentUser as BuyerModel).purchaseHistory,
         currentCart: (_currentUser as BuyerModel).currentCart,
         discountCodes: (_currentUser as BuyerModel).discountCodes,
+        avatarUrl: finalAvatarUrl,
       );
       await DatabaseService().saveBuyer(updatedUser as BuyerModel);
     } else {
@@ -319,6 +321,7 @@ class UserProvider with ChangeNotifier {
         address: newAddress, phoneNumber: newPhone, bio: seller.bio,
         revenue: seller.revenue, salesHistory: seller.salesHistory, itemsSelling: seller.itemsSelling,
         bankName: seller.bankName, bankAccount: seller.bankAccount, accountName: seller.accountName,
+        avatarUrl: finalAvatarUrl,
       );
       await DatabaseService().saveSeller(updatedUser as SellerModel);
     }

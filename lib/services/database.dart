@@ -11,6 +11,7 @@ class UserModel {
   final String phoneNumber;
   final String bio;
   final String role; // 'buyer' hoặc 'seller'
+  final String avatarUrl;
 
   String get deliveryAddress => address;
 
@@ -23,6 +24,7 @@ class UserModel {
     required this.phoneNumber,
     required this.bio,
     required this.role,
+    this.avatarUrl = '',
   });
 
   Map<String, dynamic> toMap() {
@@ -35,6 +37,7 @@ class UserModel {
       'phoneNumber': phoneNumber,
       'bio': bio,
       'role': role,
+      'avatarUrl': avatarUrl,
     };
   }
 
@@ -48,6 +51,7 @@ class UserModel {
       phoneNumber: map['phoneNumber'] ?? '',
       bio: map['bio'] ?? '',
       role: map['role'] ?? 'buyer',
+      avatarUrl: map['avatarUrl'] ?? '',
     );
   }
 }
@@ -69,6 +73,7 @@ class BuyerModel extends UserModel {
     required this.purchaseHistory,
     required this.currentCart,
     required this.discountCodes,
+    String avatarUrl = '',
   }) : super(
     uid: uid,
     email: email,
@@ -78,6 +83,7 @@ class BuyerModel extends UserModel {
     phoneNumber: phoneNumber,
     bio: bio,
     role: 'buyer',
+    avatarUrl: avatarUrl,
   );
 
   @override
@@ -101,6 +107,7 @@ class BuyerModel extends UserModel {
       purchaseHistory: List<String>.from(map['purchaseHistory'] ?? []),
       currentCart: List<Map<String, dynamic>>.from(map['currentCart'] ?? []),
       discountCodes: List<String>.from(map['discountCodes'] ?? []),
+      avatarUrl: map['avatarUrl'] ?? '',
     );
   }
 }
@@ -128,6 +135,7 @@ class SellerModel extends UserModel {
     this.bankName = '',
     this.bankAccount = '',
     this.accountName = '',
+    String avatarUrl = '',
   }) : super(
     uid: uid,
     email: email,
@@ -137,6 +145,7 @@ class SellerModel extends UserModel {
     phoneNumber: phoneNumber,
     bio: bio,
     role: 'seller',
+    avatarUrl: avatarUrl,
   );
 
   @override
@@ -166,6 +175,7 @@ class SellerModel extends UserModel {
       bankName: map['bankName'] ?? '',
       bankAccount: map['bankAccount'] ?? '',
       accountName: map['accountName'] ?? '',
+      avatarUrl: map['avatarUrl'] ?? '',
     );
   }
 }

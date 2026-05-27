@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../providers/app_providers.dart';
 import '../widgets/shared_widgets.dart';
+import '../services/database.dart';
 
 class SellerShopPage extends StatelessWidget {
   final String sellerId;
@@ -34,32 +35,42 @@ class SellerShopPage extends StatelessWidget {
       ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 10.0),
-            child: Row(
-              children: [
-                const CircleAvatar(
-                  backgroundColor: Colors.deepOrange,
-                  radius: 24,
-                  child: Icon(Icons.store, color: Colors.white, size: 24),
-                ),
-                const SizedBox(width: 15),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          FutureBuilder<UserModel?>(
+            future: DatabaseService().getUser(sellerId),
+            builder: (context, snapshot) {
+              final sellerUser = snapshot.data;
+              final avatarUrl = sellerUser?.avatarUrl ?? '';
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 10.0),
+                child: Row(
                   children: [
-                    Text(
-                      sellerName,
-                      style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                    CircleAvatar(
+                      backgroundColor: Colors.deepOrange,
+                      radius: 24,
+                      backgroundImage: avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
+                      child: avatarUrl.isNotEmpty
+                          ? null
+                          : const Icon(Icons.store, color: Colors.white, size: 24),
                     ),
-                    const SizedBox(height: 5),
-                    Text(
-                      "${sellerProducts.length} sản phẩm",
-                      style: const TextStyle(color: Colors.grey, fontSize: 14),
+                    const SizedBox(width: 15),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          sellerName,
+                          style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
+                          "${sellerProducts.length} sản phẩm",
+                          style: const TextStyle(color: Colors.grey, fontSize: 14),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
+              );
+            }
           ),
           const Divider(color: Colors.grey, height: 30),
           Expanded(

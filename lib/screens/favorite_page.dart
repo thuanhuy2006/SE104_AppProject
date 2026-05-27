@@ -31,8 +31,13 @@ class FavoritePage extends StatelessWidget {
                     CircleAvatar(
                       radius: 25,
                       backgroundColor: userProvider.isSeller ? Colors.deepOrange : Colors.grey.shade700,
-                      child: Text(userProvider.currentUser?.name[0].toUpperCase() ?? "U",
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20)),
+                      backgroundImage: userProvider.currentUser?.avatarUrl.isNotEmpty == true
+                          ? NetworkImage(userProvider.currentUser!.avatarUrl)
+                          : null,
+                      child: userProvider.currentUser?.avatarUrl.isNotEmpty == true
+                          ? null
+                          : Text(userProvider.currentUser?.name[0].toUpperCase() ?? "U",
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20)),
                     ),
                     const SizedBox(width: 15),
                     Expanded(
@@ -139,12 +144,17 @@ class FavoritePage extends StatelessWidget {
               child: CircleAvatar(
                 radius: 18,
                 backgroundColor: userProvider.isSeller ? Colors.deepOrange : Colors.grey.shade700,
-                child: userProvider.isLoggedIn
-                    ? Text(
-                        userProvider.currentUser!.name[0].toUpperCase(),
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                      )
-                    : const Icon(Icons.person, color: Colors.white, size: 20),
+                backgroundImage: (userProvider.isLoggedIn && userProvider.currentUser!.avatarUrl.isNotEmpty)
+                    ? NetworkImage(userProvider.currentUser!.avatarUrl)
+                    : null,
+                child: (userProvider.isLoggedIn && userProvider.currentUser!.avatarUrl.isNotEmpty)
+                    ? null
+                    : (userProvider.isLoggedIn
+                        ? Text(
+                            userProvider.currentUser!.name[0].toUpperCase(),
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          )
+                        : const Icon(Icons.person, color: Colors.white, size: 20)),
               ),
             ),
           ),

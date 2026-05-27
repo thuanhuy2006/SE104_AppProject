@@ -47,8 +47,20 @@ class ProfileScreen extends StatelessWidget {
                 children: [
                   _buildProfileRow(
                     label: "Hình đại diện", 
-                    isAvatar: true, 
-                    onTap: () {}
+                    avatar: CircleAvatar(
+                      radius: 20,
+                      backgroundColor: userProvider.isSeller ? Colors.deepOrange : Colors.grey.shade700,
+                      backgroundImage: user?.avatarUrl.isNotEmpty == true
+                          ? NetworkImage(user!.avatarUrl)
+                          : null,
+                      child: user?.avatarUrl.isNotEmpty == true
+                          ? null
+                          : Text(
+                              (user?.name.isNotEmpty == true) ? user!.name[0].toUpperCase() : "U",
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                            ),
+                    ),
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsPage())),
                   ),
                   _buildDivider(),
                   _buildProfileRow(
@@ -92,7 +104,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildProfileRow({required String label, String? value, bool isAvatar = false, VoidCallback? onTap}) {
+  Widget _buildProfileRow({required String label, String? value, Widget? avatar, VoidCallback? onTap}) {
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -103,8 +115,8 @@ class ProfileScreen extends StatelessWidget {
             Text(label, style: const TextStyle(color: Colors.white, fontSize: 15)),
             Row(
               children: [
-                if (isAvatar)
-                  const CircleAvatar(radius: 20, backgroundColor: Colors.grey, child: Icon(Icons.person, color: Colors.white))
+                if (avatar != null)
+                  avatar
                 else
                   Text(value ?? "", style: const TextStyle(color: Colors.white70, fontSize: 14)),
                 const SizedBox(width: 10),

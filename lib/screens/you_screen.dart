@@ -41,10 +41,15 @@ class YouScreen extends StatelessWidget {
               leading: CircleAvatar(
                 radius: 30,
                 backgroundColor: userProvider.isSeller ? Colors.deepOrange : Colors.grey.shade700,
-                child: Text(
-                  userProvider.currentUser!.name[0].toUpperCase(),
-                  style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
-                ),
+                backgroundImage: userProvider.currentUser!.avatarUrl.isNotEmpty
+                    ? NetworkImage(userProvider.currentUser!.avatarUrl)
+                    : null,
+                child: userProvider.currentUser!.avatarUrl.isNotEmpty
+                    ? null
+                    : Text(
+                        userProvider.currentUser!.name[0].toUpperCase(),
+                        style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                      ),
               ),
               title: Text(userProvider.currentUser!.name, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
               subtitle: Text(userProvider.currentUser!.email, style: const TextStyle(color: Colors.grey)),

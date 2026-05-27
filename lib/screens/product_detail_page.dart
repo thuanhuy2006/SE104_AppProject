@@ -212,16 +212,21 @@ class ProductDetailPage extends StatelessWidget {
                     future: DatabaseService().getUser(product.sellerId),
                     builder: (context, snapshot) {
                       String displayName = product.sellerName;
+                      String sellerAvatarUrl = '';
                       if (snapshot.hasData && snapshot.data != null) {
                         displayName = snapshot.data!.name;
+                        sellerAvatarUrl = snapshot.data!.avatarUrl;
                       }
 
                       return Row(
                         children: [
-                          const CircleAvatar(
+                          CircleAvatar(
                             backgroundColor: Colors.deepOrange,
                             radius: 16,
-                            child: Icon(Icons.store, color: Colors.white, size: 16),
+                            backgroundImage: sellerAvatarUrl.isNotEmpty ? NetworkImage(sellerAvatarUrl) : null,
+                            child: sellerAvatarUrl.isNotEmpty
+                                ? null
+                                : const Icon(Icons.store, color: Colors.white, size: 16),
                           ),
                           const SizedBox(width: 10),
                           Text(
