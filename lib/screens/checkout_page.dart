@@ -623,7 +623,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
   void _showPromoCodeSheet(List<CartItem> selectedItems) {
     final formatCurrency = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ', decimalDigits: 0);
     final voucherProvider = Provider.of<VoucherProvider>(context, listen: false);
-    final vouchers = voucherProvider.buyerVouchers;
 
     showModalBottomSheet(
       context: context,
@@ -633,147 +632,281 @@ class _CheckoutPageState extends State<CheckoutPage> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) {
+        final codeController = TextEditingController();
+        bool isClaiming = false;
+
         return DraggableScrollableSheet(
-          initialChildSize: 0.6,
+          initialChildSize: 0.7,
           minChildSize: 0.4,
-          maxChildSize: 0.9,
+          maxChildSize: 0.96,
           expand: false,
           builder: (_, scrollController) {
-            return SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 15),
-                child: Column(
-                  children: [
-                    const Text(
-                      "Chọn mã giảm giá",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+            return StatefulBuilder(
+              builder: (BuildContext context, StateSetter setSheetState) {
+                final userProvider = Provider.of<UserProvider>(context);
+                final user = userProvider.currentUser;
+                final vouchers = voucherProvider.buyerVouchers;
+
+                Future<void> claimVoucherInSheet() async {
+                  final code = codeController.text.trim().toUpperCase();
+                  if (code.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Vui lòng nhập mã Voucher!'), backgroundColor: Colors.redAccent),
+                    );
+                    return;
+                  }
+
+                  if (user == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Vui lòng đăng nhập để lưu Voucher!'), backgroundColor: Colors.redAccent),
+                    );
+                    return;
+                  }
+
+                  if (user is BuyerModel && user.discountCodes.contains(code)) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: const Text('Bạn đã sở hữu Voucher này rồi!'), backgroundColor: Colors.amber.shade900),
+                    );
+                    return;
+                  }
+
+                  setSheetState(() => isClaiming = true);
+
+                  try {
+                    final success = await voucherProvider.claimVoucher(user.uid, code, userProvider);
+                    if (success) {
+                      codeController.clear();
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('🎉 Lưu Voucher thành công!'), backgroundColor: Colors.green),
+                        );
+                      }
+                    } else {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Mã Voucher không tồn tại hoặc không hợp lệ!'), backgroundColor: Colors.redAccent),
+                        );
+                      }
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Lỗi: $e'), backgroundColor: Colors.redAccent),
+                      );
+                    }
+                  } finally {
+                    setSheetState(() => isClaiming = false);
+                  }
+                }
+
+                return SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 15),
+                    child: Column(
+                      children: [
+                        const Text(
+                          "Chọn mã giảm giá",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 15),
+                        // Nhập mã giảm giá trực tiếp
+                        Row(
+                          children: [
+                            Expanded(
+                              child: SizedBox(
+                                height: 50,
+                                child: TextField(
+                                  controller: codeController,
+                                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                                  textCapitalization: TextCapitalization.characters,
+                                  decoration: InputDecoration(
+                                    hintText: "Nhập mã Voucher của shop...",
+                                    hintStyle: const TextStyle(color: Colors.grey, fontSize: 13),
+                                    filled: true,
+                                    fillColor: eraCardColor,
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      borderSide: BorderSide(color: Colors.grey.shade800),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      borderSide: const BorderSide(color: Colors.white),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            SizedBox(
+                              height: 50,
+                              child: ElevatedButton(
+                                onPressed: isClaiming ? null : claimVoucherInSheet,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.amber.shade700,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                ),
+                                child: isClaiming
+                                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                    : const Text("Áp dụng", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        // Danh sách mã giảm giá
+                        if (vouchers.isEmpty)
+                          const Expanded(
+                            child: Center(
+                              child: Text("Bạn chưa lưu voucher nào phù hợp", style: TextStyle(color: Colors.grey)),
+                            ),
+                          )
+                        else
+                          Expanded(
+                            child: ListView.separated(
+                              controller: scrollController,
+                              itemCount: vouchers.length + 1, // +1 for "Xóa mã giảm giá"
+                              separatorBuilder: (_, __) => const SizedBox(height: 12),
+                              itemBuilder: (context, index) {
+                                if (index == vouchers.length) {
+                                  return ListTile(
+                                    tileColor: eraCardColor,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                    title: const Text(
+                                      "Không sử dụng Voucher",
+                                      style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
+                                    ),
+                                    leading: const Icon(
+                                      Icons.remove_circle_outline,
+                                      color: Colors.redAccent,
+                                    ),
+                                    onTap: () {
+                                      setState(() {
+                                        _appliedVoucher = null;
+                                      });
+                                      Navigator.pop(ctx);
+                                    },
+                                  );
+                                }
+
+                                final voucher = vouchers[index];
+                                double subtotal = selectedItems
+                                    .where((item) => item.sellerId == voucher.sellerId && voucher.applicableCategories.contains(item.category))
+                                    .fold(0.0, (sum, item) => sum + (item.price * item.quantity));
+
+                                bool isApplicable = subtotal >= voucher.minSpend;
+
+                                return Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: eraCardColor,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: _appliedVoucher?.code == voucher.code
+                                          ? Colors.amber.shade700
+                                          : Colors.grey.shade800,
+                                      width: _appliedVoucher?.code == voucher.code ? 1.5 : 1.0,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.local_offer,
+                                        color: isApplicable ? Colors.amber : Colors.grey,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.white24,
+                                                    borderRadius: BorderRadius.circular(4),
+                                                  ),
+                                                  child: Text(
+                                                    voucher.code,
+                                                    style: TextStyle(
+                                                      color: isApplicable ? Colors.white : Colors.grey,
+                                                      fontWeight: FontWeight.bold,
+                                                      fontSize: 13,
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Expanded(
+                                                  child: Text(
+                                                    "Shop: ${voucher.sellerName}",
+                                                    style: const TextStyle(color: Colors.grey, fontSize: 11, fontStyle: FontStyle.italic),
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 6),
+                                            Text(
+                                              "Giảm ${voucher.discountPercent.toInt()}% cho đơn từ ${formatCurrency.format(voucher.minSpend)}",
+                                              style: TextStyle(color: isApplicable ? Colors.white70 : Colors.grey.shade600, fontSize: 12),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              "Danh mục: ${voucher.applicableCategories.join(', ')}",
+                                              style: TextStyle(color: isApplicable ? Colors.grey : Colors.grey.shade700, fontSize: 11),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            if (!isApplicable) ...[
+                                              const SizedBox(height: 6),
+                                              Text(
+                                                subtotal == 0
+                                                    ? "Không có sản phẩm của shop này thuộc danh mục áp dụng"
+                                                    : "Cần mua thêm ${formatCurrency.format(voucher.minSpend - subtotal)} sản phẩm cùng danh mục của shop để áp dụng",
+                                                style: const TextStyle(color: Colors.redAccent, fontSize: 11),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      if (isApplicable)
+                                        ElevatedButton(
+                                          onPressed: () {
+                                            setState(() {
+                                              _appliedVoucher = voucher;
+                                            });
+                                            Navigator.pop(ctx);
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.amber.shade700,
+                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                            minimumSize: Size.zero,
+                                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                          ),
+                                          child: const Text(
+                                            "Chọn",
+                                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                      ],
                     ),
-                    const SizedBox(height: 15),
-                    if (vouchers.isEmpty)
-                      const Expanded(
-                        child: Center(
-                          child: Text("Bạn chưa lưu voucher nào phù hợp", style: TextStyle(color: Colors.grey)),
-                        ),
-                      )
-                    else
-                      Expanded(
-                        child: ListView.separated(
-                          controller: scrollController,
-                          itemCount: vouchers.length + 1, // +1 for "Xóa mã giảm giá"
-                          separatorBuilder: (_, __) => const SizedBox(height: 12),
-                          itemBuilder: (context, index) {
-                            if (index == vouchers.length) {
-                              return ListTile(
-                                tileColor: eraCardColor,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                title: const Text(
-                                  "Không sử dụng Voucher",
-                                  style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
-                                ),
-                                leading: const Icon(
-                                  Icons.remove_circle_outline,
-                                  color: Colors.redAccent,
-                                ),
-                                onTap: () {
-                                  setState(() {
-                                    _appliedVoucher = null;
-                                  });
-                                  Navigator.pop(ctx);
-                                },
-                              );
-                            }
-
-                            final voucher = vouchers[index];
-                            double subtotal = selectedItems
-                                .where((item) => item.sellerId == voucher.sellerId && voucher.applicableCategories.contains(item.category))
-                                .fold(0.0, (sum, item) => sum + (item.price * item.quantity));
-
-                            bool isApplicable = subtotal >= voucher.minSpend;
-
-                            return Container(
-                              decoration: BoxDecoration(
-                                color: eraCardColor,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: _appliedVoucher?.code == voucher.code
-                                      ? Colors.amber.shade700
-                                      : Colors.grey.shade800,
-                                  width: _appliedVoucher?.code == voucher.code ? 1.5 : 1.0,
-                                ),
-                              ),
-                              child: ListTile(
-                                leading: Icon(
-                                  Icons.local_offer,
-                                  color: isApplicable ? Colors.amber : Colors.grey,
-                                ),
-                                title: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      voucher.code,
-                                      style: TextStyle(
-                                        color: isApplicable ? Colors.white : Colors.grey,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    Text(
-                                      "Shop: ${voucher.sellerName}",
-                                      style: const TextStyle(color: Colors.grey, fontSize: 11, fontStyle: FontStyle.italic),
-                                    ),
-                                  ],
-                                ),
-                                subtitle: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const SizedBox(height: 5),
-                                    Text(
-                                      "Giảm ${voucher.discountPercent.toInt()}% cho đơn từ ${formatCurrency.format(voucher.minSpend)}",
-                                      style: TextStyle(color: isApplicable ? Colors.white70 : Colors.grey.shade600, fontSize: 12),
-                                    ),
-                                    Text(
-                                      "Danh mục: ${voucher.applicableCategories.join(', ')}",
-                                      style: TextStyle(color: isApplicable ? Colors.grey : Colors.grey.shade700, fontSize: 11),
-                                    ),
-                                    if (!isApplicable) ...[
-                                      const SizedBox(height: 5),
-                                      Text(
-                                        subtotal == 0
-                                            ? "Không có sản phẩm của shop này thuộc danh mục áp dụng"
-                                            : "Cần mua thêm ${formatCurrency.format(voucher.minSpend - subtotal)} sản phẩm cùng danh mục của shop để áp dụng",
-                                        style: const TextStyle(color: Colors.redAccent, fontSize: 11),
-                                      ),
-                                    ]
-                                  ],
-                                ),
-                                trailing: isApplicable
-                                    ? ElevatedButton(
-                                        onPressed: () {
-                                          setState(() {
-                                            _appliedVoucher = voucher;
-                                          });
-                                          Navigator.pop(ctx);
-                                        },
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.amber.shade700,
-                                        ),
-                                        child: const Text(
-                                          "Chọn",
-                                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                                        ),
-                                      )
-                                    : null,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                  ],
-                ),
-              ),
+                  ),
+                );
+              },
             );
           },
         );
