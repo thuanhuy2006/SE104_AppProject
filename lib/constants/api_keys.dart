@@ -1,5 +1,6 @@
 // Cấu hình Cloudinary (Dành cho việc lưu trữ hình ảnh sản phẩm)
 // Bạn cần đăng ký tài khoản tại https://cloudinary.com/
-// Sau đó thay thế 2 giá trị dưới đây bằng thông tin tài khoản của bạn.
-const String cloudinaryCloudName = "dzwxjxvke";
-const String cloudinaryUploadPreset = "Era Store";
+// Các giá trị này được tải động thông qua tham số --dart-define-from-file=.env khi chạy/build ứng dụng.
+
+const String cloudinaryCloudName = String.fromEnvironment('CLOUDINARY_CLOUD_NAME');
+const String cloudinaryUploadPreset = String.fromEnvironment('CLOUDINARY_UPLOAD_PRESET');

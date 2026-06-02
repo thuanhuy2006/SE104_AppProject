@@ -12,11 +12,11 @@ class ImageUploadService {
     try {
       if (cloudinaryCloudName.isEmpty || 
           cloudinaryCloudName == "YOUR_CLOUDINARY_CLOUD_NAME") {
-        throw Exception("Chưa cấu hình Cloudinary Cloud Name trong lib/constants/api_keys.dart!");
+        throw Exception("Chưa cấu hình Cloudinary Cloud Name! Vui lòng tạo file .env và chạy ứng dụng với tham số --dart-define-from-file=.env");
       }
       if (cloudinaryUploadPreset.isEmpty ||
           cloudinaryUploadPreset == "YOUR_CLOUDINARY_UPLOAD_PRESET") {
-        throw Exception("Chưa cấu hình Cloudinary Upload Preset trong lib/constants/api_keys.dart!");
+        throw Exception("Chưa cấu hình Cloudinary Upload Preset! Vui lòng tạo file .env và chạy ứng dụng với tham số --dart-define-from-file=.env");
       }
 
       final uri = Uri.parse("https://api.cloudinary.com/v1_1/$cloudinaryCloudName/image/upload");
